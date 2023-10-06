@@ -7,11 +7,13 @@
   )
 
   (:predicates
-    (located ?i - item ?l - location)       ; item ?i at location ?l
-    (armAt ?l - location)        ; arm at location ?l
+    (located ?i - item ?l - location)   ; item ?i at location ?l (not in a drawer)
+    (armAt ?l - location)               ; arm at location ?l
     (holding ?i - item)                 ; object being held by arm
-    (drawerOpen)                 ; drawer open 
+    (drawerOpen)                        ; drawer open 
   )
+
+    ; TODO: THINK A LOT MORE ABOUT THESE!
 
   ; moves the arm tip from its current location to a desired one.
   (:action move
@@ -22,16 +24,16 @@
 
   ; causes the arm to grab the item if they are in the same location
   (:action grab
-    :parameters (?item - item ?l - location)
-    :precondition (and (armAt ?l) (located ?item ?l) )
-    :effect (and (holding ?item) (not (located ?item ?l)))
+    :parameters (?i - item ?l - location)
+    :precondition (and (armAt ?l) (located ?i ?l) )
+    :effect (and (holding ?i) (not (located ?i ?l)))
   )
 
-  ; places the object in the hand of the object
+  ; places the object on top of something
   (:action place
-    :parameters (?item - item ?to - location)
-    :precondition (and (armAt ?from))
-    :effect (and (armAt ?to) (not (armAt ?from)))
+    :parameters (?i - item ?l - location)
+    :precondition (and (armAt ?l) (holding ?i))
+    :effect (and (located ?i ?l) (not (holding ?i)))
   )
 
   ; moves the arm tip from its current location to a desired one.
