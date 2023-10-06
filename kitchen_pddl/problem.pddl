@@ -1,13 +1,19 @@
-(define (problem pb1)
-  (:domain dinner)
+(define (problem problem1)
+  (:domain kitchen)
+
+  (:objects
+
+    stove countertop drawer_closed drawer_open - location
+    sugar spam - item
+
+  )
   (:init
-    (garbage)
-    (clean)
-    (quiet)
+    (located ?sugar - item ?stove - location)
+    (located ?spam - item ?countertop - location)
+    (armAt ?stove - location)
   )
   (:goal (and
-    (dinner)
-    (present)
-    (not (garbage))
+    (located ?sugar - item ?countertop - location)
+    (located ?spam - item ?drawer_closed - location)
   ))
 )
