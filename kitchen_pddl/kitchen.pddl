@@ -3,13 +3,14 @@
 
   (:types
     location  ; position in the world where items/robots can be
-    robot     ;
-    item      ; holds at most 1 container, only 1 robot per location
+    item      ; an object in the world that can be held.
   )
 
   (:predicates
     (located ?i - item ?l - location)       ; item ?i at location ?l
-    (holding ?i)
+    (armAt ?l - location)        ; arm at location ?l
+    (holding ?i)                 ; object being held by arm
+    (drawerOpen)                 ; drawer open 
   )
 
   ; moves a robot between two adjacent locations
