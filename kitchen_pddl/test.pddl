@@ -1,0 +1,1 @@
+; position in the world where items/robots can be
