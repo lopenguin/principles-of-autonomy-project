@@ -3,17 +3,17 @@
 
   (:objects
 
-    stove countertop drawer_closed drawer_open - location
-    sugar spam - item
+    stove countertop - surface
+    drawer - openable
+    sugar spam - object
 
   )
   (:init
-    (located ?sugar - item ?stove - location)
-    (located ?spam - item ?countertop - location)
-    (armAt ?stove - location)
+    (objectOn ?sugar - object ?stove - surface)
+    (objectOn ?spam - object ?countertop - surface)
   )
   (:goal (and
-    (located ?sugar - item ?countertop - location)
-    (located ?spam - item ?drawer_closed - location)
+    (objectOn ?sugar - object ?countertop - surface)
+    (objectIn ?spam - object ?drawer - openable)
   ))
 )

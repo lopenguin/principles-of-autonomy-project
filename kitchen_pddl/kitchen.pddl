@@ -2,44 +2,70 @@
   (:requirements :strips :typing :negative-preconditions)
 
   (:types
-    location  ; position in the world where items/robots can be
-    item      ; an object in the world that can be held.
+    surface   ; can be placed on without opening
+    openable  ; must be opened before placing
+    object    ; item that can be moved
   )
 
   (:predicates
-    (located ?i - item ?l - location)   ; item ?i at location ?l (not in a drawer)
-    (armAt ?l - location)               ; arm at location ?l
-    (holding ?i - item)                 ; object being held by arm
-    (drawerOpen)                        ; drawer open 
+    (holding ?obj - object)
+    (objectOn ?obj - object ?s - surface)
+    (opened ?o - openable)
+    (objectIn ?obj - object ?o - openable)
   )
 
-    ; TODO: THINK A LOT MORE ABOUT THESE!
-
-  ; moves the arm tip from its current location to a desired one.
-  (:action move
-    :parameters (?from - location ?to - location)
-    :precondition (and (armAt ?from))
-    :effect (and (armAt ?to) (not (armAt ?from)))
+  ; places an object onto a surface
+  (:action placeOn
+    :parameters (?obj - object ?s - surface)
+    :precondition (and (holding ?obj)
+                      (forall (?allObjs - object)
+                        (not (objectOn ?allObjs ?s))
+                      )
+                  )
+    :effect (and (objectOn ?obj ?s) (not (holding ?obj)))
   )
 
-  ; causes the arm to grab the item if they are in the same location
-  (:action grab
-    :parameters (?i - item ?l - location)
-    :precondition (and (armAt ?l) (located ?i ?l) )
-    :effect (and (holding ?i) (not (located ?i ?l)))
+  ; places an object into an open cabinet
+  (:action placeIn
+    :parameters (?obj - object ?o - openable)
+    :precondition (and (holding ?obj) (opened ?o)
+                      (forall (?allObjs - object)
+                        (not (objectIn ?allObjs ?o))
+                      )
+                  )
+    :effect (and (objectIn ?obj ?o) (not (holding ?obj)))
   )
 
-  ; places the object on top of something
-  (:action place
-    :parameters (?i - item ?l - location)
-    :precondition (and (armAt ?l) (holding ?i))
-    :effect (and (located ?i ?l) (not (holding ?i)))
+  ; opens a cabinet
+  (:action open
+    :parameters (?o - openable)
+    :precondition (and (not (opened ?o))
+                      (forall (?allObjs - object)
+                        (not (holding ?allObjs))
+                      )
+                  )
+    :effect (and (opened ?o))
   )
 
-  ; moves the arm tip from its current location to a desired one.
-  (:action move
-    :parameters (?from - location ?to - location)
-    :precondition (and (armAt ?from))
-    :effect (and (armAt ?to) (not (armAt ?from)))
+  ; pick up an object (from a surface)
+  (:action pickUp
+    :parameters (?obj - object ?s - surface)
+    :precondition (and (objectOn ?obj ?s)
+                      (forall (?allObjs - object)
+                        (not (holding ?allObjs))
+                      )
+                  )
+    :effect (and (holding ?obj) (not (objectOn ?obj ?s)))
+  )
+
+  ; pick up an object (from a cabinet)
+  (:action cabPickUp
+    :parameters (?obj - object ?o - openable)
+    :precondition (and (objectOn ?obj ?o) (opened ?o)
+                      (forall (?allObjs - object)
+                        (not (holding ?allObjs))
+                      )
+                  )
+    :effect (and (holding ?obj) (not (objectOn ?obj ?o)))
   )
 )
