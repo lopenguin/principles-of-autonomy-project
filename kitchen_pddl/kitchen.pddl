@@ -1,5 +1,5 @@
 (define (domain kitchen)
-  (:requirements :strips :typing :negative-preconditions)
+  (:requirements :strips :typing :negative-preconditions :universal-preconditions)
 
   (:types
     surface   ; can be placed on without opening
