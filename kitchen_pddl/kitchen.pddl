@@ -1,4 +1,4 @@
-(define (domain dwr)
+(define (domain kitchen)
   (:requirements :strips :typing :negative-preconditions)
 
   (:types
