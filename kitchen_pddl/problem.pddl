@@ -1,4 +1,4 @@
-(define (problem problem1)
+(define (problem problem)
   (:domain kitchen)
 
   (:objects
@@ -8,12 +8,13 @@
     sugar spam - object
 
   )
-  (:init
-    (objectOn ?sugar - object ?stove - surface)
-    (objectOn ?spam - object ?countertop - surface)
+  (:init (and
+    (objectOn sugar stove)
+    (objectOn spam countertop)
+    )
   )
   (:goal (and
-    (objectOn ?sugar - object ?countertop - surface)
-    (objectIn ?spam - object ?drawer - openable)
+    (objectOn sugar countertop)
+    (objectIn spam drawer)
   ))
 )
