@@ -4,68 +4,65 @@
   (:types
     surface   ; can be placed on without opening
     openable  ; must be opened before placing
-    object    ; item that can be moved
+    box    ; item that can be moved
   )
 
   (:predicates
-    (holding ?obj - object)
-    (objectOn ?obj - object ?s - surface)
+    (holding ?box - box)
+    (boxOn ?box - box ?s - surface)
     (opened ?o - openable)
-    (objectIn ?obj - object ?o - openable)
+    (boxIn ?box - box ?o - openable)
   )
 
-  ; places an object onto a surface
+  ; places an box onto a surface
   (:action placeOn
-    :parameters (?obj - object ?s - surface)
-    :precondition (and (holding ?obj)
-                      (forall (?allObjs - object)
-                        (not (objectOn ?allObjs ?s))
-                      )
+    :parameters (?box - box ?s - surface)
+    :precondition (and (holding ?box)
                   )
-    :effect (and (objectOn ?obj ?s) (not (holding ?obj)))
+    :effect (and (boxOn ?box ?s) (not (holding ?box)))
   )
 
-  ; places an object into an open cabinet
+  ; places an box into an open cabinet
   (:action placeIn
-    :parameters (?obj - object ?o - openable)
-    :precondition (and (holding ?obj) (opened ?o)
-                      (forall (?allObjs - object)
-                        (not (objectIn ?allObjs ?o))
+    :parameters (?box - box ?o - openable)
+    :precondition (and (holding ?box) (opened ?o)
+                      (forall (?allboxs - box)
+                        (not (boxIn ?allboxs ?o))
                       )
                   )
-    :effect (and (objectIn ?obj ?o) (not (holding ?obj)))
+    :effect (and (boxIn ?box ?o) (not (holding ?box)))
   )
 
   ; opens a cabinet
   (:action open
     :parameters (?o - openable)
     :precondition (and (not (opened ?o))
-                      (forall (?allObjs - object)
-                        (not (holding ?allObjs))
+                      (forall (?allboxs - box)
+                        (not (holding ?allboxs))
                       )
                   )
     :effect (and (opened ?o))
   )
 
-  ; pick up an object (from a surface)
+  ; pick up an box (from a surface)
   (:action pickUp
-    :parameters (?obj - object ?s - surface)
-    :precondition (and (objectOn ?obj ?s)
-                      (forall (?allObjs - object)
-                        (not (holding ?allObjs))
+    :parameters (?box - box ?s - surface)
+    :precondition (and (boxOn ?box ?s)
+                      (forall (?allboxs - box)
+                        (not (holding ?allboxs))
                       )
                   )
-    :effect (and (holding ?obj) (not (objectOn ?obj ?s)))
+    :effect (and (holding ?box) (not (boxOn ?box ?s)))
   )
 
-  ; pick up an object (from a cabinet)
+  ; pick up an box (from a cabinet)
   (:action cabPickUp
-    :parameters (?obj - object ?o - openable)
-    :precondition (and (objectOn ?obj ?o) (opened ?o)
-                      (forall (?allObjs - object)
-                        (not (holding ?allObjs))
+    :parameters (?box - box ?o - openable)
+    :precondition (and (boxOn ?box ?o) (opened ?o)
+                      (forall (?allboxs - box)
+                        (not (holding ?allboxs))
                       )
                   )
-    :effect (and (holding ?obj) (not (objectOn ?obj ?o)))
+    :effect (and (holding ?box) (not (boxOn ?box ?o)))
   )
 )

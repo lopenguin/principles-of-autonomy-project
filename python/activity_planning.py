@@ -5,7 +5,8 @@ Solves the "kitchen" problem by generating an activity plan.
 '''
 from pddl import parse_domain, parse_problem
 from pddl.logic import Predicate, constants, variables
-from pddl.core import Domain, Problem, Action
+from pddl.core import Domain, Problem
+from pddl.action import Action
 
 class ActivityPlan():
     # Parse the domain and problem files
@@ -25,7 +26,9 @@ class ActivityPlan():
         MAX_ITERATIONS = 100
         for _ in range(MAX_ITERATIONS):
             for a in self.domain.actions:
-                print(a)
+                # check if action is possible in current state
+                print(type(a.precondition))
+            break
 
 
     def test(self):
