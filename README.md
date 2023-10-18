@@ -1,10 +1,9 @@
 # 16.413 Project
 
 ## Requirements
-To make sure you have the right dependencies, run the following commands:
+To make sure you have the right dependencies, run the following command in the home directory of this repository:
 ```
-cd python
-pip install -r requirements.txt
+pip install -r python/requirements.txt
 ```
 
 ## Activity Planning
