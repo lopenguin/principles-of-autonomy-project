@@ -8,10 +8,9 @@
     sugar spam - object
 
   )
-  (:init (and
+  (:init 
     (objectOn sugar stove)
     (objectOn spam countertop)
-    )
   )
   (:goal (and
     (objectOn sugar countertop)
