@@ -77,8 +77,15 @@ def main():
     domain_file = 'pddl/kitchen.pddl'
     problem_file = 'pddl/problem.pddl'
 
-    plan = ActivityPlan(domain_file, problem_file)
-    plan.graph_search()
+    planner = ActivityPlan(domain_file, problem_file)
+    plan = planner.graph_search()
+
+    if plan is not None:
+        print('plan:')
+        for act in plan:
+            print(act.name + ' ' + ' '.join(act.parameters))
+    else:
+        print('No plan was found')
     
 
 if __name__ == "__main__":
