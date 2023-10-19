@@ -33,7 +33,7 @@
   ; places an box into an open cabinet
   (:action placeIn
     :parameters (?box - box ?o - openable)
-    :precondition (and (holding ?box) 
+    :precondition (and (holding ?box)
                        (opened ?o)
                        (cabClear ?o)
                   )
@@ -62,6 +62,7 @@
     :effect (and (holding ?box) 
                  (not (boxOn ?box ?s))
                  (not (armClear))
+                 (surfClear ?s)
             )
   )
 
@@ -75,6 +76,7 @@
     :effect (and (holding ?box)
                  (not (boxOn ?box ?o))
                  (not (armClear))
+                 (cabClear ?o)
             )
   )
 )

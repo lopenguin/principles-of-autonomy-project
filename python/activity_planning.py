@@ -40,6 +40,7 @@ class ActivityPlan():
                             while plan:
                                 act, plan = plan
                                 full_plan.insert(0, act)
+                            print(new_state)
                             return full_plan
                         visited.add(new_state)
                         fringe.append(new_state)
@@ -63,6 +64,9 @@ class ActivityPlan():
         print(f"Predicates: {self.domain.predicates}")
         print(f"Actions: {self.domain.actions}")
 
+    '''
+    helper functions
+    '''
     # determine if a state is applicable
     def applicable(self, state, positive, negative):
         return positive.issubset(state) and negative.isdisjoint(state)
@@ -75,8 +79,8 @@ class ActivityPlan():
 
 def main():
     domain_file = 'pddl/kitchen.pddl'
-    # problem_file = 'pddl/problem.pddl'
-    problem_file = 'pddl/debugproblem.pddl'
+    problem_file = 'pddl/problem.pddl'
+    # problem_file = 'pddl/debugproblem.pddl'
 
     planner = ActivityPlan(domain_file, problem_file)
     plan = planner.graph_search()
