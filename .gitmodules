@@ -1,0 +1,3 @@
+[submodule "lib/pddl-parser"]
+	path = lib/pddl-parser
+	url = git@github.com:pucrs-automated-planning/pddl-parser.git

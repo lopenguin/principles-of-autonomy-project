@@ -3,10 +3,7 @@ activity_planning.py
 
 Solves the "kitchen" problem by generating an activity plan.
 '''
-from pddl import parse_domain, parse_problem
-from pddl.logic import Predicate, constants, variables
-from pddl.core import Domain, Problem
-from pddl.action import Action
+from pddl_parser import PDDL_Parser
 
 class ActivityPlan():
     # Parse the domain and problem files

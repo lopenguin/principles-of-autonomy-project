@@ -11,6 +11,8 @@
   (:init 
     (boxOn sugar stove)
     (boxOn spam countertop)
+    (armClear)
+    (cabClear drawer)
   )
   (:goal (and
     (boxOn sugar countertop)
