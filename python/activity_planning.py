@@ -75,7 +75,8 @@ class ActivityPlan():
 
 def main():
     domain_file = 'pddl/kitchen.pddl'
-    problem_file = 'pddl/problem.pddl'
+    # problem_file = 'pddl/problem.pddl'
+    problem_file = 'pddl/debugproblem.pddl'
 
     planner = ActivityPlan(domain_file, problem_file)
     plan = planner.graph_search()
