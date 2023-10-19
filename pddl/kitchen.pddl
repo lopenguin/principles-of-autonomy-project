@@ -69,7 +69,7 @@
   ; pick up an box (from a cabinet)
   (:action cabPickUp
     :parameters (?box - box ?o - openable)
-    :precondition (and (boxOn ?box ?o) 
+    :precondition (and (boxIn ?box ?o) 
                        (opened ?o)
                        (armClear)
                   )

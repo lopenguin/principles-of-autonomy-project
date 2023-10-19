@@ -56,16 +56,22 @@
   ;   (opened drawer)
   ; ))
 
+  ; ; up to fifth step
+  ; (:goal (and
+  ;   (not (boxOn sugar stove))
+  ;   (not (boxOn spam countertop))
+  ;   (armClear)
+  ;   (not (holding spam))
+  ;   (not (holding sugar))
+  ;   (not (cabClear drawer))
+  ;   (boxIn spam drawer)
+  ;   (opened drawer)
+  ;   (boxOn sugar countertop)
+  ; ))
+
   ; up to fifth step
   (:goal (and
-    (not (boxOn sugar stove))
-    (not (boxOn spam countertop))
-    (armClear)
-    (not (holding spam))
-    (not (holding sugar))
-    (not (cabClear drawer))
-    (boxIn spam drawer)
-    (opened drawer)
     (boxOn sugar countertop)
+    (boxOn spam stove)
   ))
 )
