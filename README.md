@@ -5,6 +5,7 @@ To make sure you have the right dependencies, run the following command in the h
 ```
 pip install -r python/requirements.txt
 ```
+TODO: add instructions for compiling pddl parser
 
 ## Activity Planning
 ### PDDL Domain
