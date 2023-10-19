@@ -14,6 +14,12 @@ class ActivityPlan():
         self.parser.parse_domain(domain_file)
         self.parser.parse_problem(problem_file)
 
+        # Grounding process
+        self.ground_actions = []
+        for action in self.parser.actions:
+            for act in action.groundify(self.parser.objects, self.parser.types):
+                self.ground_actions.append(act)
+
 
     # search through entire graph with BFS (uninformed search!)
     def graph_search(self):
@@ -27,14 +33,12 @@ class ActivityPlan():
         state = self.parser.state
         goal_pos = self.parser.positive_goals
         goal_not = self.parser.negative_goals
+        ground_actions = self.ground_actions
+
         # Do nothing
         if self.applicable(state, goal_pos, goal_not):
             return []
-        # Grounding process
-        ground_actions = []
-        for action in self.parser.actions:
-            for act in action.groundify(self.parser.objects, self.parser.types):
-                ground_actions.append(act)
+        
         # Search
         visited = set([state])
         fringe = [state, None]
@@ -56,18 +60,54 @@ class ActivityPlan():
                         fringe.append((act, plan))
         return None
     
-
+    # TODO: DEBUG THIS
     def hill_climb_search(self):
         '''
         Enforced hill climbing heuristic fast forward search
+        Note: we never backtrack
 
         Algorithm:
         1. Start with initial state (expand to children)
         2. Run relaxed plan on children to assign heuristic
-        3. Add all children to list sorted by heuristic
+        3. Pick child with smallest heuristic
         4. Repeat with first item in list.
         '''
-        print(self.fast_forward_bfs(self.parser.state))
+        state = self.parser.state
+        goal_pos = self.parser.positive_goals
+        goal_not = self.parser.negative_goals
+        plan = [state]
+
+        MAX_ITER = 100
+        for _ in range(MAX_ITER):
+            # check if state is goal (termination condition)
+            if (self.applicable(state, goal_pos, goal_not)):
+                return plan, state
+
+            h_ff = []
+            states_ff = []
+            actions_ff = []
+
+            # find possible actions from states
+            for act in self.ground_actions:
+                if self.applicable(state, act.positive_preconditions, act.negative_preconditions):
+                    # compute the FF heuristic for the resulting state
+                    new_state = self.apply(state, act.add_effects, act.del_effects)
+                    h_ff.append(self.fast_forward_bfs(new_state))
+                    states_ff.append(new_state)
+                    actions_ff.append(act)
+
+            # h_ff computed for all child actions
+            # select state with lowest h as new state
+            lowest_h = min(h_ff)
+            lowest_idx = h_ff.index(lowest_h)
+            state = states_ff.index(lowest_idx)
+            action = actions_ff.index(lowest_idx)
+            plan.append(action)
+
+
+        print("Failed!")
+
+
 
     
     def fast_forward_bfs(self, start):
@@ -78,16 +118,11 @@ class ActivityPlan():
         state = start
         goal_pos = self.parser.positive_goals
         goal_not = self.parser.negative_goals
+        ground_actions = self.ground_actions
 
         # check if goal already satisfied
         if self.applicable(state, goal_pos, goal_not):
             return 0
-        
-        # Grounding process
-        ground_actions = []
-        for action in self.parser.actions:
-            for act in action.groundify(self.parser.objects, self.parser.types):
-                ground_actions.append(act)
 
         # Proceed with BFS (TODO: write our own version)
         visited = set([state])
@@ -150,7 +185,8 @@ def main():
 
 
     # Enforced hill climbing
-    planner.hill_climb_search()
+    plan_hc, end_hc = planner.hill_climb_search()
+    print_plan(plan_hc, end_hc)
     
 
 if __name__ == "__main__":
