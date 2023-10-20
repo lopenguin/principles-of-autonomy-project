@@ -4,6 +4,7 @@ activity_planning.py
 Solves the "kitchen" problem by generating an activity plan.
 '''
 from pddl_parser.PDDL import PDDL_Parser
+import sys
 
 class ActivityPlan():
     def __init__(self, domain_file, problem_file):
@@ -22,22 +23,29 @@ class ActivityPlan():
 
 
     # search through entire graph with BFS (uninformed search!)
-    def graph_search(self):
+    def graph_search(self, start=None, ff=False):
         '''
         Uninformed search through entire graph with BFS 
         modified from pddl library implementation for testing.
+        Arguments:
+        start: set of predicates to start with
+        ff: boolean describing whether to use fast-forward
+
         Returns plan, state
         *plan* is a list of actions
         *state* is the predicates in effect at the final node
         '''
-        state = self.parser.state
+        if (start == None):
+            state = self.parser.state
+        else:
+            state = start
         goal_pos = self.parser.positive_goals
         goal_not = self.parser.negative_goals
         ground_actions = self.ground_actions
 
-        # Do nothing
+        # check if goal already saisfied
         if self.applicable(state, goal_pos, goal_not):
-            return []
+            return [], state
         
         # Search
         visited = set([state])
@@ -47,7 +55,11 @@ class ActivityPlan():
             plan = fringe.pop(0)
             for act in ground_actions:
                 if self.applicable(state, act.positive_preconditions, act.negative_preconditions):
-                    new_state = self.apply(state, act.add_effects, act.del_effects)
+                    if (ff):
+                        del_effects = set()
+                    else:
+                        del_effects = act.del_effects
+                    new_state = self.apply(state, act.add_effects, del_effects)
                     if new_state not in visited:
                         if self.applicable(new_state, goal_pos, goal_not):
                             full_plan = [act]
@@ -68,8 +80,9 @@ class ActivityPlan():
 
         Algorithm:
         1. Start with initial state (expand to children)
-        2. Run relaxed plan on children to assign heuristic
-        3. Pick child with smallest heuristic as new state
+        2. Run relaxed plan on children to assign heuristic. Add children to sorted queue.
+            (note: sorted queue is easy since heuristic is integer)s
+        3. Pick item in queue with lowest heuristic as next state to explore
         4. Repeat until goal is reached
         '''
         state = self.parser.state
@@ -94,7 +107,8 @@ class ActivityPlan():
                 if self.applicable(state, act.positive_preconditions, act.negative_preconditions):
                     # compute the FF heuristic for the resulting state
                     new_state = self.apply(state, act.add_effects, act.del_effects)
-                    h_ff.append(self.fast_forward_bfs(new_state))
+                    p, _ = self.graph_search(new_state, ff=True)
+                    h_ff.append(len(p))
                     states_ff.append(new_state)
                     actions_ff.append(act)
 
@@ -117,6 +131,9 @@ class ActivityPlan():
                 
 
                 next = queue[lowest_h].pop(0)
+                # remove the heuristic value from the dictionary if no remaining nodes have it.
+                if (len(queue[lowest_h]) == 0):
+                    del queue[lowest_h]
                 plan = next[3]
                 plan.append(next[2])
                 state = next[1]
@@ -124,45 +141,6 @@ class ActivityPlan():
 
         print("Hill Climbing Failed! Returning partial plan")
         return plan, state
-
-
-
-    
-    def fast_forward_bfs(self, start):
-        '''
-        eliminate delete effects to find relaxed heuristic to the goal from given start node.
-        returns: number of actions to reach goal
-        '''
-        state = start
-        goal_pos = self.parser.positive_goals
-        goal_not = self.parser.negative_goals
-        ground_actions = self.ground_actions
-
-        # check if goal already satisfied
-        if self.applicable(state, goal_pos, goal_not):
-            return 0
-
-        # Proceed with BFS
-        visited = set([state])
-        fringe = [state, None]
-        while fringe:
-            state = fringe.pop(0)
-            plan = fringe.pop(0)
-            for act in ground_actions:
-                if self.applicable(state, act.positive_preconditions, act.negative_preconditions):
-                    new_state = self.apply(state, act.add_effects, set())
-                    if new_state not in visited:
-                        if self.applicable(new_state, goal_pos, goal_not):
-                            full_plan = [act]
-                            while plan:
-                                act, plan = plan
-                                full_plan.insert(0, act)
-                            return len(full_plan)
-                        visited.add(new_state)
-                        fringe.append(new_state)
-                        fringe.append((act, plan))
-
-        return None
 
 
 
@@ -190,10 +168,17 @@ def print_plan(plan, end, name):
     else:
         print('No plan was found')
 
+
+
 def main():
     domain_file = 'pddl/kitchen.pddl'
-    # problem_file = 'pddl/problem.pddl'
-    problem_file = 'pddl/debugproblem.pddl' # for debugging only
+    problem_file = 'pddl/problem.pddl'
+
+    # support choosing a different problem file
+    if (len(sys.argv) > 1):
+        problem_file = str(sys.argv[1])
+    
+    print("Running with problem_file:",problem_file)
 
     # create our planner
     planner = ActivityPlan(domain_file, problem_file)
