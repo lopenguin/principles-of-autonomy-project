@@ -60,7 +60,7 @@ class ActivityPlan():
                         fringe.append((act, plan))
         return None
     
-    # TODO: DEBUG THIS
+    
     def hill_climb_search(self):
         '''
         Enforced hill climbing heuristic fast forward search
@@ -69,13 +69,15 @@ class ActivityPlan():
         Algorithm:
         1. Start with initial state (expand to children)
         2. Run relaxed plan on children to assign heuristic
-        3. Pick child with smallest heuristic
-        4. Repeat with first item in list.
+        3. Pick child with smallest heuristic as new state
+        4. Repeat until goal is reached
         '''
         state = self.parser.state
         goal_pos = self.parser.positive_goals
         goal_not = self.parser.negative_goals
-        plan = [state]
+        plan = []
+
+        queue = {}
 
         MAX_ITER = 100
         for _ in range(MAX_ITER):
@@ -96,16 +98,32 @@ class ActivityPlan():
                     states_ff.append(new_state)
                     actions_ff.append(act)
 
-            # h_ff computed for all child actions
-            # select state with lowest h as new state
-            lowest_h = min(h_ff)
-            lowest_idx = h_ff.index(lowest_h)
-            state = states_ff.index(lowest_idx)
-            action = actions_ff.index(lowest_idx)
-            plan.append(action)
+            if (len(h_ff) == 0):
+                print("FF Heuristic Failed")
+            else:
+
+                # h_ff computed for all child actions
+                # add to queue by heuristic
+                lowest_h = min(h_ff)
+                for i in range(len(h_ff)):
+                    if (h_ff[i] == lowest_h):
+                        if (h_ff[i] in queue.keys()):
+                            queue[h_ff[i]].append((h_ff[i], states_ff[i], actions_ff[i], plan.copy()))
+                        else:
+                            queue[h_ff[i]] = [(h_ff[i], states_ff[i], actions_ff[i], plan.copy())]
+                
+                # get the next action
+                lowest_h = min(queue.keys())
+                
+
+                next = queue[lowest_h].pop(0)
+                plan = next[3]
+                plan.append(next[2])
+                state = next[1]
 
 
-        print("Failed!")
+        print("Hill Climbing Failed! Returning partial plan")
+        return plan, state
 
 
 
@@ -124,7 +142,7 @@ class ActivityPlan():
         if self.applicable(state, goal_pos, goal_not):
             return 0
 
-        # Proceed with BFS (TODO: write our own version)
+        # Proceed with BFS
         visited = set([state])
         fringe = [state, None]
         while fringe:
@@ -162,31 +180,32 @@ class ActivityPlan():
         return state.difference(negative).union(positive)
     
 
-def print_plan(plan, end):
+def print_plan(plan, end, name):
+    print("--------------")
     if plan is not None:
-        print('BFS plan:')
-        for act in plan:
-            print(act.name + ' ' + ' '.join(act.parameters))
+        print(f"{name} plan:")
+        for i, act in enumerate(plan):
+            print(f"{i+1}. {act.name} {act.parameters}")
         # print("Final state:", end)
     else:
         print('No plan was found')
 
 def main():
     domain_file = 'pddl/kitchen.pddl'
-    problem_file = 'pddl/problem.pddl'
-    # problem_file = 'pddl/debugproblem.pddl' # for debugging only
+    # problem_file = 'pddl/problem.pddl'
+    problem_file = 'pddl/debugproblem.pddl' # for debugging only
 
     # create our planner
     planner = ActivityPlan(domain_file, problem_file)
 
     # Breadth-first search
     plan_BFS, end_BFS = planner.graph_search()
-    print_plan(plan_BFS, end_BFS)
+    print_plan(plan_BFS, end_BFS, "BFS")
 
 
     # Enforced hill climbing
     plan_hc, end_hc = planner.hill_climb_search()
-    print_plan(plan_hc, end_hc)
+    print_plan(plan_hc, end_hc, "Enforced hill climbing")
     
 
 if __name__ == "__main__":
