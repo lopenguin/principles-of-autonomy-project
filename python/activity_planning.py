@@ -75,7 +75,7 @@ class ActivityPlan():
     
     def hill_climb_search(self):
         '''
-        Enforced hill climbing heuristic fast forward search
+        Hill climbing heuristic fast forward search
         Note: we never backtrack
 
         Algorithm:
@@ -188,9 +188,9 @@ def main():
     print_plan(plan_BFS, end_BFS, "BFS")
 
 
-    # Enforced hill climbing
+    # hill climbing
     plan_hc, end_hc = planner.hill_climb_search()
-    print_plan(plan_hc, end_hc, "Enforced hill climbing")
+    print_plan(plan_hc, end_hc, "hill climbing")
     
 
 if __name__ == "__main__":
