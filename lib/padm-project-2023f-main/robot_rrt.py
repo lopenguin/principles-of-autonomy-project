@@ -108,6 +108,10 @@ def simulate_path(world, final_path):
     for joint_angle in final_path:
         set_joint_positions(world.robot, world.arm_joints, joint_angle)
         time.sleep(0.05)
+
+
+def collides(x0, x1):
+    raise NotImplementedError
         
 
 def robot_rrt(world, start_joint_angles, goal_region):
@@ -139,6 +143,9 @@ def robot_rrt(world, start_joint_angles, goal_region):
         x_new = tuple(find_x_new(x_nearest,x_rand,max_step,lower_limits,upper_limits)) # Find x_new in the same direction as x_rand (needs to be smaller for the IK to solve)
         #print("X_new:", x_new)
         #add collision checking later
+        if (collides(x_nearest, x_new)):
+            continue
+
         #print("x_nearest", x_nearest)
         #print("x_new", x_new)
         Vertices.append(x_new) #add x_new to set of nodes
