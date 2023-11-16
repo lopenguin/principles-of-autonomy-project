@@ -115,8 +115,17 @@ def simulate_path(world, final_path):
         time.sleep(0.05)
 
 
+
 def collides(x0, x1):
+    for angle in [x0,x1]:
+        #Need to create samples in between 
+        set_joint_positions(world.robot, world.arm_joints, angle)
+        is_collision = single_collision(world.robot)
+        if is_collision:
+            print(f"COLLISION FOUND: {is_collision}")
+            return True
     return False
+        
         
 
 def robot_rrt(world, start_joint_angles, goal_region):
