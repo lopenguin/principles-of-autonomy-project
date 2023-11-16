@@ -52,37 +52,39 @@ def main():
 
     np.set_printoptions(precision=3, suppress=True)
     world = World(use_gui=True)
-    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(-0.2, 0.65, np.pi / 4))
+    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(0.1, 0.65, np.pi / 4))
     spam_box = add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
-    wait_for_user()
+    # wait_for_user()
     world._update_initial()
     tool_link = link_from_name(world.robot, 'panda_hand')
     joints = get_movable_joints(world.robot)
     print('Base Joints', [get_joint_name(world.robot, joint) for joint in world.base_joints])
     print('Arm Joints', [get_joint_name(world.robot, joint) for joint in world.arm_joints])
     sample_fn = get_sample_fn(world.robot, world.arm_joints)
+
+    print("Going to operate the base without collision checking")
+    goal_pos = translate_linearly(world, 1.4) # does not do any collision checking!!
+    goal_pos[1] += 0.7
+    set_joint_positions(world.robot, world.base_joints, goal_pos)
+
     print("Going to use IK to go from a sample start state to a goal state\n")
-    for i in range(2):
+    for i in range(10):
         print('Iteration:', i)
         conf = sample_fn()
         set_joint_positions(world.robot, world.arm_joints, conf)
         wait_for_user()
         ik_joints = get_ik_joints(world.robot, PANDA_INFO, tool_link)
         start_pose = get_link_pose(world.robot, tool_link)
-        end_pose = multiply(start_pose, Pose(Point(z=1.0)))
+        end_pose = Pose(Point(0.1, 0.65, -0.25), Euler(0.,np.pi,0.))
         for pose in interpolate_poses(start_pose, end_pose, pos_step_size=0.01):
             conf = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, pose, max_time=0.05), None)
+            print(conf)
             if conf is None:
                 print('Failure!')
                 wait_for_user()
                 break
             set_joint_positions(world.robot, ik_joints, conf)
-    print("Going to operate the base without collision checking")
-    for i in range(100):
-        goal_pos = translate_linearly(world, 0.01) # does not do any collision checking!!
-        set_joint_positions(world.robot, world.base_joints, goal_pos)
-        if (i % 30 == 0):
-            wait_for_user()
+        wait_for_user()
     wait_for_user()
     world.destroy()
 

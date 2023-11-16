@@ -9,7 +9,7 @@ from  activity_planning import ActivityPlan
 
 KMAP_JOINT = {
     'place': {
-        'stove': np.array([]),
+        'stove': np.array([1.1723088743324874, -0.09932000222746469, -1.0510790462723252, -2.062314453545313, -0.09528274438761919, 2.011110746888584, 0.9494727751742751]),
         'countertop': np.array([]),
         'drawer': np.array([])
     },
@@ -20,9 +20,9 @@ KMAP_JOINT = {
 
 KMAP_TASK = {
     'place': {
-        'stove': np.array([-0.2, 0.65, np.pi / 4]),
+        'stove': np.array([-0.2, 0.65, -0.25]),
         'countertop': np.array([]),
-        'drawer': np.array([0.2, 1.1, np.pi / 4])
+        'drawer': np.array([0.2, 1.1, np.pi / 4]) # TODO WRONG
     },
     'open': {
         'drawer': np.array([])

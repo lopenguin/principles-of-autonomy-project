@@ -112,7 +112,7 @@ def simulate_path(world, final_path):
 
 
 def collides(x0, x1):
-    raise NotImplementedError
+    return False
         
 
 def robot_rrt(world, start_joint_angles, goal_region):
@@ -168,7 +168,7 @@ def main(start_joint_angles, goal_region):
     np.set_printoptions(precision=3, suppress=True)
     world = World(use_gui=True) 
     grasp_height = 0.1 # right above the sugar
-    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(-0.2, 0.65, np.pi / 4))
+    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(0.1, 0.65, np.pi / 4))
     sugar_box_pose = get_pose(world.get_body(sugar_box))
     sugar_box_position, sugar_box_orientation = sugar_box_pose
     sugar_box_angles = ((sugar_box_position[0], sugar_box_position[1], sugar_box_position[2] + grasp_height), (Euler(roll=0, pitch=np.pi/2, yaw=0)))
@@ -176,10 +176,11 @@ def main(start_joint_angles, goal_region):
     spam_box = add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
     world._update_initial()
     tool_link = link_from_name(world.robot, 'panda_hand')
-    for i in range(100):
-        goal_pos = translate_linearly(world, 0.01) # does not do any collision checking!!
-        set_joint_positions(world.robot, world.base_joints, goal_pos)
-        time.sleep(0.1)
+
+    print("Going to operate the base without collision checking")
+    goal_pos = translate_linearly(world, 1.4) # does not do any collision checking!!
+    goal_pos[1] += 0.7
+    set_joint_positions(world.robot, world.base_joints, goal_pos)
         
     final_path = robot_rrt(world, start_joint_angles, goal_region)
     wait_for_user()
@@ -225,7 +226,8 @@ def main(start_joint_angles, goal_region):
 #goal_joint_angles = [angle + offset for angle, offset in zip(start_joint_angles, angle_offsets)]
 #sample_goal = get_sample_fn(world.robot, world.arm_joints)
 #goal_joint_angles = tuple(sample_goal())
-goal_joint_angles = (2.838311267173578, 1.7244685769643007, -2.84226720544487, -1.7908654445975372, 1.7530127023674704, 1.1025644779622914, 0.17423056193600317)
+# goal_joint_angles = (2.838311267173578, 1.7244685769643007, -2.84226720544487, -1.7908654445975372, 1.7530127023674704, 1.1025644779622914, 0.17423056193600317)
+goal_joint_angles = [1.1723088743324874, -0.09932000222746469, -1.0510790462723252, -2.062314453545313, -0.09528274438761919, 2.011110746888584, 0.9494727751742751]
 #print("goal:", goal_joint_angles)
 #start_joint_angles = tuple(sample_goal())
 start_joint_angles = (-2.333400804952562, 0.7383606900280834, 1.1742612657904137, -1.2249193382261694, -1.7583702601412796, 3.22570026313478, -1.0923235354053924)
@@ -251,6 +253,4 @@ start_in_goal = all(lower <= angle <= upper for angle, (lower, upper) in zip(sta
 #print("goal joint angles", goal_joint_angles)
 #print("path:",final_path)
 main(start_joint_angles, goal_region)
-
-
-
+wait_for_user()
