@@ -1,51 +1,53 @@
 # 16.413 Project
 
-## Requirements
+## Installation
+Follow the instructions below to run the code in this repository.
 
-<!-- To make sure you have the right dependencies, run the following command in the home directory of this repository:
-```
-pip install -r python/requirements.txt
-``` -->
+We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
 
-You need to install the pddl-parser library. To do this, follow the commands below. If you run into trouble, you can follow the instructions on the [offical repo](https://github.com/pucrs-automated-planning/pddl-parser/tree/master).
+1. Install non-Python dependencies:
+  ```sh
+  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  sudo apt-get install git-lfs clang cmake python3-pip python3-venv  && git lfs install --skip-repo
+  ```
+2. Install Python packages: `pip install -r requirements.txt`
 
-We have configured pddl-parser as a submodule. To load it, navigate to the home directory of your repo clone and run the following command in the terminal:
-
-```
-git submodule update --init --recursive
-```
-
-You then need to compile the python package. To do this:
-
-```
-cd lib/pddl-parser
-python3 setup.py install
-```
-
-For the last command, you may need to use sudo or open command prompt in administrator mode.
+3. Build pybullet and pddl-parser:
+  ```sh
+  cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
+  python setup.py
+  cd - && cd pddl-parser && \
+  python setup.py install
+  ```
 
 ## Organization
 
-This repository is organized into the three folders:
+This repository is organized into as follows:
 
-- `lib` contains external dependencies that are not available through `pip`.
-- `pddl` contains PDDL domain and problem files.
-- `python` contains code written by us for various parts of the project.
+- `models` contains CAD data for the simulator.
+- `pddl` contains PDDL domain and problem files, as well as a script to test PDDL activity planning.
+- `src` contains the backbone of the simulator and provided utility files.
+- `pddl-parser` and `ss-pybullet` are external respositories copied into this repo.
+
+We have written the following scripts:
+
+- `pddl/activity_planning.py` runs an activity planner over a sample problem.
+- `robot_rrt.py` opens the simulation and runs RRT with no trajectory optimization.
 
 ## Activity Planning
 
 ### Running for yourself
 
-To run our activity planning demonstration, make sure you are in the **home directory of this repo**. Then run:
+To run our activity planning demonstration, make sure you are in the **pddl directory of this repo**. Then run:
 
 ```
-python3 python/activity_planning.py
+python3 activity_planning.py
 ```
 
 Optionally, you may test out a different problem file. In the command line, run:
 
 ```
-python3 python/activity_planning.py pddl/problem_hard.pddl
+python3 activity_planning.py problem_hard.pddl
 ```
 
 ### PDDL Domain
@@ -155,3 +157,6 @@ Below we provide more detail on how each search is structured:
 1. Repeat until goal is reached
 
 The queue system may be slightly different from the lecture notes implementation. The motivation of this was to prevent flip-flopping between actions with equivalent heuristic values. Adding a queue for actions forces the planner to go with the lowest-heuristic action without making the problem significantly more complex.
+
+## Motion Planning
+TODO
