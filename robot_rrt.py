@@ -16,6 +16,10 @@ import numpy as np
 import random
 import time
 
+from pddl.activity_planning import ActivityPlan
+from pddl.kitchen_map import get_goal, KMAP_JOINT
+
+
 sys.path.extend(os.path.abspath(os.path.join(os.getcwd(), d)) for d in ['pddlstream', 'ss-pybullet'])
 
 from pybullet_tools.utils import set_pose, Pose, Point, Euler, multiply, get_pose, get_point, create_box, set_all_static, WorldSaver, create_plane, COLOR_FROM_NAME, stable_z_on_aabb, pairwise_collision, elapsed_time, get_aabb_extent, get_aabb, create_cylinder, set_point, get_function_name, wait_for_user, dump_world, set_random_seed, set_numpy_seed, get_random_seed, get_numpy_seed, set_camera, set_camera_pose, link_from_name, get_movable_joints, get_joint_name
@@ -163,31 +167,6 @@ def robot_rrt(world, start_joint_angles, goal_region):
             return final_path
     print("Vertices Length",len(Edges))
     print('No Path Found') # if this happens increase N, maybe add goal biasing
-            
-def main(start_joint_angles, goal_region):
-    np.set_printoptions(precision=3, suppress=True)
-    world = World(use_gui=True) 
-    grasp_height = 0.1 # right above the sugar
-    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(0.1, 0.65, np.pi / 4))
-    sugar_box_pose = get_pose(world.get_body(sugar_box))
-    sugar_box_position, sugar_box_orientation = sugar_box_pose
-    sugar_box_angles = ((sugar_box_position[0], sugar_box_position[1], sugar_box_position[2] + grasp_height), (Euler(roll=0, pitch=np.pi/2, yaw=0)))
-    print("sugar box angles",sugar_box_angles)
-    spam_box = add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
-    world._update_initial()
-    tool_link = link_from_name(world.robot, 'panda_hand')
-
-    print("Going to operate the base without collision checking")
-    goal_pos = translate_linearly(world, 1.4) # does not do any collision checking!!
-    goal_pos[1] += 0.7
-    set_joint_positions(world.robot, world.base_joints, goal_pos)
-        
-    final_path = robot_rrt(world, start_joint_angles, goal_region)
-    wait_for_user()
-    if final_path:
-        simulate_path(world, final_path)
-    else:
-        print("not path found")
     
         
         
@@ -227,30 +206,78 @@ def main(start_joint_angles, goal_region):
 #sample_goal = get_sample_fn(world.robot, world.arm_joints)
 #goal_joint_angles = tuple(sample_goal())
 # goal_joint_angles = (2.838311267173578, 1.7244685769643007, -2.84226720544487, -1.7908654445975372, 1.7530127023674704, 1.1025644779622914, 0.17423056193600317)
-goal_joint_angles = [1.1723088743324874, -0.09932000222746469, -1.0510790462723252, -2.062314453545313, -0.09528274438761919, 2.011110746888584, 0.9494727751742751]
-#print("goal:", goal_joint_angles)
-#start_joint_angles = tuple(sample_goal())
-start_joint_angles = (-2.333400804952562, 0.7383606900280834, 1.1742612657904137, -1.2249193382261694, -1.7583702601412796, 3.22570026313478, -1.0923235354053924)
-#print("Modified goal_joint_angles:", goal_joint_angles)
-#print("starting pose:", start_pose)
-#print(goal_pose)
-#print("start joint angles:", start_joint_angles)
-#print("goal joint angles", goal_joint_angles)
-#start_joint_angles = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, start_pose, max_candidates=INF, norm=INF), None)
-#goal_joint_angles = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, goal_pose, max_candidates=INF, norm=INF), None)
-tolerance_radians = 5*(np.pi/180) # tolerance for goal_pose to make a feasible goal region
-goal_region = [(angle - tolerance_radians, angle + tolerance_radians) for angle in goal_joint_angles]
-#print("goal_region:", goal_region)
-#need another line so that the goal_region is within the joint limits
-start_in_goal = all(lower <= angle <= upper for angle, (lower, upper) in zip(start_joint_angles, goal_region))
-#print("Is the start configuration within the goal region?", start_in_goal)
-#sample_fn = get_sample_fn(world.robot, world.arm_joints)
-#print("Sample_fn", sample_fn)
-#print("joint space distance:", joint_space_distance(start_joint_angles,goal_joint_angles))
-#sample_fn = get_sample_fn(world.robot, world.arm_joints)
-#ik_joints = get_ik_joints(world.robot, PANDA_INFO, tool_link)
-#final_path = robot_rrt(world, start_joint_angles, goal_region)
-#print("goal joint angles", goal_joint_angles)
-#print("path:",final_path)
-main(start_joint_angles, goal_region)
-wait_for_user()
+# goal_joint_angles = [1.1723088743324874, -0.09932000222746469, -1.0510790462723252, -2.062314453545313, -0.09528274438761919, 2.011110746888584, 0.9494727751742751]
+# #print("goal:", goal_joint_angles)
+# #start_joint_angles = tuple(sample_goal())
+# start_joint_angles = (-2.333400804952562, 0.7383606900280834, 1.1742612657904137, -1.2249193382261694, -1.7583702601412796, 3.22570026313478, -1.0923235354053924)
+# #print("Modified goal_joint_angles:", goal_joint_angles)
+# #print("starting pose:", start_pose)
+# #print(goal_pose)
+# #print("start joint angles:", start_joint_angles)
+# #print("goal joint angles", goal_joint_angles)
+# #start_joint_angles = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, start_pose, max_candidates=INF, norm=INF), None)
+# #goal_joint_angles = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, goal_pose, max_candidates=INF, norm=INF), None)
+# tolerance_radians = 5*(np.pi/180) # tolerance for goal_pose to make a feasible goal region
+# goal_region = [(angle - tolerance_radians, angle + tolerance_radians) for angle in goal_joint_angles]
+# #print("goal_region:", goal_region)
+# #need another line so that the goal_region is within the joint limits
+# start_in_goal = all(lower <= angle <= upper for angle, (lower, upper) in zip(start_joint_angles, goal_region))
+# #print("Is the start configuration within the goal region?", start_in_goal)
+# #sample_fn = get_sample_fn(world.robot, world.arm_joints)
+# #print("Sample_fn", sample_fn)
+# #print("joint space distance:", joint_space_distance(start_joint_angles,goal_joint_angles))
+# #sample_fn = get_sample_fn(world.robot, world.arm_joints)
+# #ik_joints = get_ik_joints(world.robot, PANDA_INFO, tool_link)
+# #final_path = robot_rrt(world, start_joint_angles, goal_region)
+# #print("goal joint angles", goal_joint_angles)
+# #print("path:",final_path)
+# main(start_joint_angles, goal_region)
+# wait_for_user()
+
+
+if __name__ == '__main__':
+    start_joint_angles = (-2.333400804952562, 0.7383606900280834, 1.1742612657904137, -1.2249193382261694, -1.7583702601412796, 3.22570026313478, -1.0923235354053924)
+
+    domain_file = 'pddl/kitchen.pddl'
+    problem_file = 'pddl/problem.pddl'
+    MAP = KMAP_JOINT
+
+    # BOO
+    np.set_printoptions(precision=3, suppress=True)
+    world = World(use_gui=True) 
+    grasp_height = 0.1 # right above the sugar
+    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(0.1, 0.65, np.pi / 4))
+    sugar_box_pose = get_pose(world.get_body(sugar_box))
+    sugar_box_position, sugar_box_orientation = sugar_box_pose
+    sugar_box_angles = ((sugar_box_position[0], sugar_box_position[1], sugar_box_position[2] + grasp_height), (Euler(roll=0, pitch=np.pi/2, yaw=0)))
+    print("sugar box angles",sugar_box_angles)
+    spam_box = add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
+    world._update_initial()
+    tool_link = link_from_name(world.robot, 'panda_hand')
+
+    print("Going to operate the base without collision checking")
+    goal_pos = translate_linearly(world, 1.4) # does not do any collision checking!!
+    goal_pos[1] += 0.7
+    set_joint_positions(world.robot, world.base_joints, goal_pos)
+
+    # activity planning
+    planner = ActivityPlan(domain_file, problem_file)
+    plan_hc, end_hc = planner.hill_climb_search()
+
+    for i, act in enumerate(plan_hc):
+        goal_joint_angles = get_goal(act, MAP)
+        print(f"{i+1}. {act.name} {act.parameters}:\n\t{goal_joint_angles}")
+
+        tolerance_radians = 5*(np.pi/180) # tolerance for goal_pose to make a feasible goal region
+        goal_region = [(angle - tolerance_radians, angle + tolerance_radians) for angle in goal_joint_angles]
+        #print("goal_region:", goal_region)
+        #need another line so that the goal_region is within the joint limits
+        start_in_goal = all(lower <= angle <= upper for angle, (lower, upper) in zip(start_joint_angles, goal_region))
+            
+        final_path = robot_rrt(world, start_joint_angles, goal_region)
+        wait_for_user()
+        start_joint_angles = goal_joint_angles
+        if final_path:
+            simulate_path(world, final_path)
+        else:
+            print("not path found")
