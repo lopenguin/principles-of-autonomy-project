@@ -15,7 +15,7 @@ We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
 3. Build pybullet and pddl-parser:
   ```sh
   cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
-  python setup.py
+  python setup.py install
   cd - && cd pddl-parser && \
   python setup.py install
   ```

@@ -72,16 +72,15 @@ def main():
         print('Iteration:', i)
         conf = sample_fn()
         set_joint_positions(world.robot, world.arm_joints, conf)
-        wait_for_user()
         ik_joints = get_ik_joints(world.robot, PANDA_INFO, tool_link)
         start_pose = get_link_pose(world.robot, tool_link)
-        end_pose = Pose(Point(0.1, 0.65, -0.25), Euler(0.,np.pi,0.))
+        end_pose = Pose(Point(0.45, 1.2, -0.5), Euler(0.,-np.pi,0.))
         for pose in interpolate_poses(start_pose, end_pose, pos_step_size=0.01):
             conf = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, pose, max_time=0.05), None)
             print(conf)
             if conf is None:
                 print('Failure!')
-                wait_for_user()
+                # wait_for_user()
                 break
             set_joint_positions(world.robot, ik_joints, conf)
         wait_for_user()
