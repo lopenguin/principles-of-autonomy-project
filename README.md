@@ -158,5 +158,26 @@ Below we provide more detail on how each search is structured:
 
 The queue system may be slightly different from the lecture notes implementation. The motivation of this was to prevent flip-flopping between actions with equivalent heuristic values. Adding a queue for actions forces the planner to go with the lowest-heuristic action without making the problem significantly more complex.
 
+### Results
+Our activity planner quickly converges to a list of actions. Particularly, it has the following output for the given activity plan:
+
+```
+BFS plan:
+1. open ('drawer',)
+2. pickup ('spam', 'countertop')
+3. placein ('spam', 'drawer')
+4. pickup ('sugar', 'stove')
+5. placeon ('sugar', 'countertop')
+--------------
+hill climbing plan:
+1. open ('drawer',)
+2. pickup ('spam', 'countertop')
+3. placein ('spam', 'drawer')
+4. pickup ('sugar', 'stove')
+5. placeon ('sugar', 'countertop')
+```
+
+Note that the BFS and hill climbing plans are the same, since the predicate space is so simple.
+
 ## Motion Planning
 TODO
