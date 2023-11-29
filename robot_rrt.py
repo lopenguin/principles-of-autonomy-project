@@ -108,10 +108,14 @@ def find_rrt_path(start_pose,x_new,Edges):
         current_node = Edges[current_node]
         rrt_path.append(current_node)
     return rrt_path
-
+    
 def simulate_path(world, final_path):
     for joint_angle in final_path:
+        tool_link = link_from_name(world.robot, 'panda_hand')
+        robot_position = get_link_pose(world.robot,tool_link)
+        #print("robot euler", robot_position)
         set_joint_positions(world.robot, world.arm_joints, joint_angle)
+        set_pose(world.get_body(sugar_box),robot_position)
         time.sleep(0.05)
 
 
@@ -211,7 +215,7 @@ if __name__ == '__main__':
         goal_joint_angles = get_goal(act, MAP)
         print(f"{i+1}. {act.name} {act.parameters}:\n\t{goal_joint_angles}")
         wait_for_user()
-        tolerance_radians = 5*(np.pi/180) # tolerance for goal_pose to make a feasible goal region
+        tolerance_radians = 1*(np.pi/180) # tolerance for goal_pose to make a feasible goal region
         goal_region = [(angle - tolerance_radians, angle + tolerance_radians) for angle in goal_joint_angles]
         #print("goal_region:", goal_region)
         #need another line so that the goal_region is within the joint limits
