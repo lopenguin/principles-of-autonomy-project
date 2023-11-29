@@ -63,7 +63,7 @@ def main():
     sample_fn = get_sample_fn(world.robot, world.arm_joints)
 
     print("Going to operate the base without collision checking")
-    goal_pos = translate_linearly(world, 1.4) # does not do any collision checking!!
+    goal_pos = translate_linearly(world, 1.2) # does not do any collision checking!!
     goal_pos[1] += 0.7
     set_joint_positions(world.robot, world.base_joints, goal_pos)
 
@@ -74,7 +74,7 @@ def main():
         set_joint_positions(world.robot, world.arm_joints, conf)
         ik_joints = get_ik_joints(world.robot, PANDA_INFO, tool_link)
         start_pose = get_link_pose(world.robot, tool_link)
-        end_pose = Pose(Point(0.45, 1.2, -0.5), Euler(0.,-np.pi,0.))
+        end_pose = Pose(Point(0.45, 1.2, -0.65), Euler(np.pi/2,0.,-np.pi/2))
         for pose in interpolate_poses(start_pose, end_pose, pos_step_size=0.01):
             conf = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, pose, max_time=0.05), None)
             print(conf)
