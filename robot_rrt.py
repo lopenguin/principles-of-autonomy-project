@@ -23,7 +23,7 @@ from pddl.kitchen_map import get_goal, KMAP_JOINT
 sys.path.extend(os.path.abspath(os.path.join(os.getcwd(), d)) for d in ['pddlstream', 'ss-pybullet'])
 
 from pybullet_tools.utils import set_pose, Pose, Point, Euler, multiply, get_pose, get_point, create_box, set_all_static, WorldSaver, create_plane, COLOR_FROM_NAME, stable_z_on_aabb, pairwise_collision, elapsed_time, get_aabb_extent, get_aabb, create_cylinder, set_point, get_function_name, wait_for_user, dump_world, set_random_seed, set_numpy_seed, get_random_seed, get_numpy_seed, set_camera, set_camera_pose, link_from_name, get_movable_joints, get_joint_name, single_collision
-from pybullet_tools.utils import CIRCULAR_LIMITS, get_custom_limits, set_joint_positions, interval_generator, get_link_pose, interpolate_poses
+from pybullet_tools.utils import CIRCULAR_LIMITS, get_custom_limits, set_joint_positions, get_joint_positions, interval_generator, get_link_pose, interpolate_poses
 
 from pybullet_tools.ikfast.franka_panda.ik import PANDA_INFO, FRANKA_URDF
 from pybullet_tools.ikfast.ikfast import get_ik_joints, closest_inverse_kinematics
@@ -111,11 +111,22 @@ def find_rrt_path(start_pose,x_new,Edges):
     
 def simulate_path(world, final_path):
     for joint_angle in final_path:
+        
         tool_link = link_from_name(world.robot, 'panda_hand')
         robot_position = get_link_pose(world.robot,tool_link)
         #print("robot euler", robot_position)
         set_joint_positions(world.robot, world.arm_joints, joint_angle)
-        set_pose(world.get_body(sugar_box),robot_position)
+        if act.name=='placein':
+            if 'spam' in act.parameters:
+                set_pose(world.get_body(spam_box),robot_position)
+            else:
+                set_pose(world.get_body(sugar_box),robot_position)
+        if act.name=='placeon':
+            if 'spam' in act.parameters:
+                set_pose(world.get_body(spam_box),robot_position)
+            else:
+                set_pose(world.get_body(sugar_box),robot_position)
+        #set_pose(world.get_body(sugar_box),robot_position)
         time.sleep(0.05)
 
 
@@ -201,7 +212,6 @@ if __name__ == '__main__':
     spam_box = add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
     world._update_initial()
     tool_link = link_from_name(world.robot, 'panda_hand')
-
     print("Going to operate the base without collision checking")
     goal_pos = translate_linearly(world, 1.2) # does not do any collision checking!!
     goal_pos[1] += 0.7
@@ -212,6 +222,7 @@ if __name__ == '__main__':
     plan_hc, end_hc = planner.hill_climb_search()
     wait_for_user()
     for i, act in enumerate(plan_hc):
+        start_joint_angles = get_joint_positions(world.robot, world.arm_joints)
         goal_joint_angles = get_goal(act, MAP)
         print(f"{i+1}. {act.name} {act.parameters}:\n\t{goal_joint_angles}")
         wait_for_user()
@@ -220,13 +231,22 @@ if __name__ == '__main__':
         #print("goal_region:", goal_region)
         #need another line so that the goal_region is within the joint limits
         start_in_goal = all(lower <= angle <= upper for angle, (lower, upper) in zip(start_joint_angles, goal_region))
-        print("Is the start configuration within the goal region?", start_in_goal)    
+        print("Is the start configuration within the goal region?", start_in_goal)
         final_path = robot_rrt(world, start_joint_angles, goal_region)
         wait_for_user()
         start_joint_angles = tuple(goal_joint_angles)
         print("next starting joint angles",start_joint_angles)
         if final_path:
             simulate_path(world, final_path)
+            if act.name=='pickup':
+                if 'spam' in act.parameters:
+                    tool_link = link_from_name(world.robot, 'panda_hand')
+                    robot_position = get_link_pose(world.robot,tool_link)
+                    set_pose(world.get_body(spam_box),robot_position)
+                else:
+                    tool_link = link_from_name(world.robot, 'panda_hand')
+                    robot_position = get_link_pose(world.robot,tool_link)
+                    set_pose(world.get_body(sugar_box),robot_position)
             wait_for_user()
         else:
             print("not path found")
