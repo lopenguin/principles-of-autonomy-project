@@ -23,7 +23,7 @@ from pddl.kitchen_map import get_goal, KMAP_JOINT
 sys.path.extend(os.path.abspath(os.path.join(os.getcwd(), d)) for d in ['pddlstream', 'ss-pybullet'])
 
 from pybullet_tools.utils import set_pose, Pose, Point, Euler, multiply, get_pose, get_point, create_box, set_all_static, WorldSaver, create_plane, COLOR_FROM_NAME, stable_z_on_aabb, pairwise_collision, elapsed_time, get_aabb_extent, get_aabb, create_cylinder, set_point, get_function_name, wait_for_user, dump_world, set_random_seed, set_numpy_seed, get_random_seed, get_numpy_seed, set_camera, set_camera_pose, link_from_name, get_movable_joints, get_joint_name, single_collision, pairwise_collision
-from pybullet_tools.utils import CIRCULAR_LIMITS, get_custom_limits, set_joint_positions, set_joint_position, get_joint_positions, interval_generator, get_link_pose, interpolate_poses, get_joint_info
+from pybullet_tools.utils import CIRCULAR_LIMITS, get_custom_limits, set_joint_positions, set_joint_position, get_joint_positions, interval_generator, get_link_pose, interpolate_poses, get_joint_info, enable_gravity, enable_real_time, disable_real_time
 
 from pybullet_tools.ikfast.franka_panda.ik import PANDA_INFO, FRANKA_URDF
 from pybullet_tools.ikfast.ikfast import get_ik_joints, closest_inverse_kinematics
@@ -167,7 +167,7 @@ def simulate_path(world, final_path):
         drawer_upper_lim = 0.30
         drawer_poses = np.linspace(drawer_lower_lim,drawer_upper_lim,len(opening_traj))
         for joint_angle,drawer_pose in zip(opening_traj,drawer_poses):
-            print('opening joint angle',joint_angle)
+            #print('opening joint angle',joint_angle)
             tool_link = link_from_name(world.robot, 'panda_hand')
             robot_position = get_link_pose(world.robot,tool_link)
             #print("robot euler", robot_position)
@@ -189,6 +189,7 @@ def collides(x0, x1):
         
 
 def robot_rrt(world, start_joint_angles, goal_region):  
+    #disable_real_time()
     world._update_initial()
     lower_limits, upper_limits = get_custom_limits(world.robot, world.arm_joints) #gets joint limits
     max_step = 5*np.pi/180
@@ -255,6 +256,7 @@ if __name__ == '__main__':
     #sugar_box_angles = ((sugar_box_position[0], sugar_box_position[1], sugar_box_position[2] + grasp_height), (Euler(roll=0, pitch=np.pi/2, yaw=0)))
     #print("sugar box angles",sugar_box_angles)
     spam_box = add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
+    enable_gravity()
     world._update_initial()
     tool_link = link_from_name(world.robot, 'panda_hand')
     #print("Going to operate the base without collision checking")
