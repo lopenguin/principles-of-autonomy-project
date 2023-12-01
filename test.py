@@ -71,10 +71,13 @@ def main():
     for i in range(10):
         print('Iteration:', i)
         conf = sample_fn()
-        set_joint_positions(world.robot, world.arm_joints, conf)
+        #set_joint_positions(world.robot, world.arm_joints, conf)
+        #startt = [-0.9993014606753718, 0.5575981344031993, 0.08848226914383991, -1.9027443759647094, -0.07403383822822018, 2.4572408795101772, -0.08136335471573197]
+        startt = [1.1179275530880908, -1.7247582114792013, -1.905165080776905, -1.7852457187137816, 0.7740623064191361, 2.8037386402624724, 2.896613453226052]
+        set_joint_positions(world.robot, world.arm_joints, startt)
         ik_joints = get_ik_joints(world.robot, PANDA_INFO, tool_link)
         start_pose = get_link_pose(world.robot, tool_link)
-        end_pose = Pose(Point(0.45, 1.2, -0.65), Euler(np.pi/2,0.,-np.pi/2))
+        end_pose = Pose(Point(0.75, 1.2, -0.65), Euler(np.pi/2,0.,-np.pi/2))
         for pose in interpolate_poses(start_pose, end_pose, pos_step_size=0.01):
             conf = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, pose, max_time=0.05), None)
             print(conf)
