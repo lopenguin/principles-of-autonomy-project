@@ -20,7 +20,7 @@ from pddl.activity_planning import ActivityPlan
 from pddl.kitchen_map import get_goal, KMAP_JOINT
 
 
-sys.path.extend(os.path.abspath(os.path.join(os.getcwd(), d)) for d in ['pddlstream', 'ss-pybullet'])
+sys.path.extend(os.path.abspath(os.path.join(os.getcwd(), d)) for d in ['ss-pybullet'])
 
 from pybullet_tools.utils import set_pose, Pose, Point, Euler, multiply, get_pose, get_point, create_box, set_all_static, WorldSaver, create_plane, COLOR_FROM_NAME, stable_z_on_aabb, pairwise_collision, elapsed_time, get_aabb_extent, get_aabb, create_cylinder, set_point, get_function_name, wait_for_user, dump_world, set_random_seed, set_numpy_seed, get_random_seed, get_numpy_seed, set_camera, set_camera_pose, link_from_name, get_movable_joints, get_joint_name, single_collision, pairwise_collision
 from pybullet_tools.utils import CIRCULAR_LIMITS, get_custom_limits, set_joint_positions, set_joint_position, get_joint_positions, interval_generator, get_link_pose, interpolate_poses, get_joint_info, enable_gravity, enable_real_time, disable_real_time
@@ -237,6 +237,7 @@ def robot_rrt(world, start_joint_angles, goal_region):
             return final_path
     print("Vertices Length",len(Edges))
     print('No Path Found') # if this happens increase N, maybe add goal biasing
+
 
 
 if __name__ == '__main__':
