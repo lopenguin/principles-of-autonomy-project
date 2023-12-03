@@ -8,10 +8,9 @@ import numpy as np
 # lower_limits, upper_limits = get_custom_limits(world.robot, world.arm_joints)
 # JOINT_LIMITS = [lower_limits, upper_limits]
 
-def optimize_trajectory(path, JOINT_LIMITS, dt, JOINT_VEL_MAX):
+def optimize_trajectory(start, goal):
     # Decision var dimensions
     state_dim = len(path[0])
-    path_len = len(path)
 
     # Create optimization problem
     prog = MathematicalProgram()
@@ -31,6 +30,7 @@ def optimize_trajectory(path, JOINT_LIMITS, dt, JOINT_VEL_MAX):
         prog.addConstraint((x[:,i] - x[:,i-1])/dt <= JOINT_VEL_MAX)
         prog.addConstraint((x[:,i] - x[:,i-1])/dt >= -JOINT_VEL_MAX)
 
-    ## 
+    ## Objective function
+    for i in range()
 
     pass

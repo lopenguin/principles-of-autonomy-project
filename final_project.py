@@ -9,6 +9,8 @@ import numpy as np
 import random
 import time
 
+from pydrake.solvers import MathematicalProgram, Solve
+
 # Add pybullet dependencies
 sys.path.extend(os.path.abspath(os.path.join(os.getcwd(), d)) for d in ['ss-pybullet'])
 from pybullet_tools.utils import set_pose, pairwise_collision, wait_for_user, link_from_name, pairwise_collision
@@ -130,6 +132,45 @@ class KitchenRobot:
                 return True
         return False
     
+    
+    # optimization-based traj opt
+    def optimize_trajectory(self, start, goal, num_pts):
+        if not USE_JOINT_SPACE:
+            raise NotImplementedError
+        
+        # convert to numpy
+        start = np.array(start)
+        goal = np.array(goal)
+        num_jts = len(start)
+
+        # Create optimization problem
+        prog = MathematicalProgram()
+        x = prog.NewContinuousVariables(num_jts, num_pts, "theta")
+
+        ## Constraints
+        # start and goal
+        prog.AddLinearEqualityConstraint(x[:, 1], start)
+        prog.AddLinearEqualityConstraint(x[:,-1], goal)
+        # joint limits
+        for i in range(num_jts):
+            # apply for one joint along all paths
+            prog.AddBoundingBoxConstraint(-1, 10, x[i,:])
+
+        ## Objective: shortest path
+        for i in range(1,num_pts):
+            for j in range(num_jts):
+                prog.AddCost(np.transpose(x[j,i] - x[j,i-1]) * (x[j,i] - x[j,i-1]))
+
+        ## Solve!
+        result = Solve(prog)
+        
+        if (not result.is_success()):
+            return None
+        
+        path = result.GetSolution(x)
+        print(path)
+
+
 
     
     def simulate_path(self, act, path):
@@ -209,12 +250,13 @@ def main():
         kr.world._update_initial() # not sure if we need this
 
         # RRT
-        path = kr.rrt_on_action(start, goal, goal_region)
-        if path is not None:
-            print('RRT path found!')
+        # path = kr.rrt_on_action(start, goal, goal_region)
 
         # Trajectory optimization
-        # path = kr.optimal_traj(start,goal)
+        path = kr.optimize_trajectory(start,goal,100)
+
+        if path is not None:
+            print('Path found!')
 
         # visualize the path
         kr.simulate_path(act, path)
