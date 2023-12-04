@@ -37,6 +37,8 @@ RRT_GOAL_BIAS = 0.2
 RRT_MAX_STEP = 5 * (np.pi/180) # 5 deg
 RRT_COLLIDES_STEP = 0.01 # ~0.5 deg
 
+OPTIMIZE_NUM_PTS = 50
+
 
 class KitchenRobot:
     def __init__(self):
@@ -77,8 +79,6 @@ class KitchenRobot:
     def rrt_on_action(self, start, goal, goal_region):
         if not USE_JOINT_SPACE:
             raise NotImplementedError
-
-        world = self.world
         
         nodes = [tuple(start)]
         edges = {}
@@ -154,7 +154,7 @@ class KitchenRobot:
         # joint limits
         for i in range(num_jts):
             # apply for one joint along all paths
-            prog.AddBoundingBoxConstraint(-1, 10, x[i,:])
+            prog.AddBoundingBoxConstraint(self.lower_limits[i], self.upper_limits[i], x[i,:])
 
         ## Objective: shortest path
         for i in range(1,num_pts):
@@ -167,8 +167,15 @@ class KitchenRobot:
         if (not result.is_success()):
             return None
         
-        path = result.GetSolution(x)
-        print(path)
+        path_np = result.GetSolution(x)
+
+        # convert to list of tuples
+        path = []
+        for i in range(num_pts):
+            pt = np.array(path_np[:,i].T)
+            path.append(tuple(pt))
+
+        return path
 
 
 
@@ -220,6 +227,8 @@ class KitchenRobot:
 
 
 def main():
+    # helpful prints
+
     # initialize the world
     kr = KitchenRobot()
 
@@ -232,9 +241,14 @@ def main():
     # Prepare to move
     print("Plan found! Press enter to execute.")
 
-    # Proceed through the plan
+    # Follow the plan
+    if rrt:
+        print("Showing RRT-planned trajectory")
+    else:
+        print("Showing optimization-based trajectory (no collision avoidance)")
+    wait_for_user("Press enter to begin")
+
     for i, act in enumerate(kr.plan):
-        wait_for_user()
         print(f"{i+1}. {act.name} {act.parameters}")
 
         # Motion Planning Setup
@@ -249,25 +263,55 @@ def main():
         
         kr.world._update_initial() # not sure if we need this
 
-        # RRT
-        # path = kr.rrt_on_action(start, goal, goal_region)
+        # Trajectory generation
+        if (rrt):
+            # RRT
+            path = kr.rrt_on_action(start, goal, goal_region)
+        else:
+            # optimization
+            path = kr.optimize_trajectory(start,goal, OPTIMIZE_NUM_PTS)
 
-        # Trajectory optimization
-        path = kr.optimize_trajectory(start,goal,100)
 
         if path is not None:
-            print('Path found!')
+            print('Path found.')
+        else:
+            print("No path found! Try running again?")
+            wait_for_user()
 
         # visualize the path
         kr.simulate_path(act, path)
+        wait_for_user()
 
-    # pause at end!
-    wait_for_user()
-
-        
-
+    # pause at very end
+    print("Problem complete.")
+    wait_for_user("Press enter to close")
 
 
 
 if __name__ == '__main__':
+    # parse input arguments
+    if len(sys.argv) == 1:
+        # Pick randomly between RRT and colision mode
+        if (random.random() > 0.5):
+            rrt = False
+        else:
+            rrt = True
+    else:
+        if (sys.argv[1] == "rrt"):
+            rrt = True
+        elif (sys.argv[1] == "optimize"):
+            rrt = False
+        else:
+            print("Use \"rrt\" or \"optimize\" keywords to pick. Defaulting to RRT...)")
+            rrt = True
+
+    if (rrt):
+        print("-"*20)
+        print("Running in RRT mode.")
+        print("-"*20)
+    else:
+        print("-"*29)
+        print("Running in optimization mode.")
+        print("-"*29)
+
     main()

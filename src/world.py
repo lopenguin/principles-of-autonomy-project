@@ -434,7 +434,7 @@ class World(object):
         self.names_from_type.setdefault(obj_type, []).append(name)
         path = get_obj_path(obj_type)
         #self.path_from_name[name] = path
-        print('Loading', path)
+        # print('Loading', path)
         body = load_pybullet(path, **kwargs)
         assert body is not None
         self.add(name, body)
