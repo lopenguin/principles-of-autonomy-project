@@ -179,6 +179,46 @@ class KitchenRobot:
 
         return path
 
+    # optimize trajectory with collision avoidance
+    def optimize_trajectory_with_collision_avoidance(self,start,goal, num_pts):
+        if USE_JOINT_SPACE:
+            raise NotImplementedError
+        
+        # convert to numpy
+        start = np.array(start)
+        goal = np.array(goal)
+        num_jts = len(start)
+
+        # Create optimization problem
+        prog = MathematicalProgram()
+        x = prog.NewContinuousVariables(num_jts, num_pts, "theta")
+
+        ## Constraints
+        # start and goal
+        prog.AddLinearEqualityConstraint(x[:, 1], start)
+        prog.AddLinearEqualityConstraint(x[:,-1], goal)
+        # joint limits
+        for i in range(num_jts):
+            # apply for one joint along all paths
+            prog.AddBoundingBoxConstraint(self.lower_limits[i], self.upper_limits[i], x[i,:])
+        
+        ## Objective: shortest path
+        for i in range(1,num_pts):
+            for j in range(num_jts):
+                prog.AddCost(np.transpose(x[j,i] - x[j,i-1]) * (x[j,i] - x[j,i-1]))
+
+        ## Solve!
+        result = Solve(prog)
+        # use to set initial guess with collisions
+        prog.SetInitialGuess(prog.ReconstructTrajectory(result))
+
+
+        ## Repeat with collisions
+        for i in range(num_jts):
+            for c in helpers.COLLISIONS_LIST:
+                sign = c['sign'][i]
+                val = c['val'][i]
+                prog.AddConstraint(sign*x[i,:] < val)
 
 
     
