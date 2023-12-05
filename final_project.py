@@ -56,7 +56,8 @@ class KitchenRobot:
 
         # RRT functions
         self.lower_limits, self.upper_limits = get_custom_limits(world.robot, world.arm_joints)
-
+        self.kitchen_lower, self.kitchen_upper = get_custom_limits(world.kitchen, world.kitchen_joints)
+        print('kitchen_lower',self.kitchen_lower)
         # save
         self.world = world
         self.sugar_box = sugar_box
@@ -155,11 +156,14 @@ class KitchenRobot:
         for i in range(num_jts):
             # apply for one joint along all paths
             prog.AddBoundingBoxConstraint(self.lower_limits[i], self.upper_limits[i], x[i,:])
-
+        #Kitchen Joint?
+        #self.kitchen_lower, self.kitchen_upper = get_custom_limits(World.kitchen, World.kitchen_joints)
+        #print('kitchen_lower',self.kitchen_lower)
+        
         ## Objective: shortest path
         for i in range(1,num_pts):
             for j in range(num_jts):
-                prog.AddCost(np.transpose(x[j,i] - x[j,i-1]) * (x[j,i] - x[j,i-1]))
+                prog.AddCost(np.transpose(x[j,i] - x[j,i-1]) * (x[j,i] - x[j,i-1])) #try square root
 
         ## Solve!
         result = Solve(prog)
@@ -186,7 +190,7 @@ class KitchenRobot:
         if not USE_JOINT_SPACE:
             raise NotImplementedError
 
-        for point in path:
+        for i, point in enumerate(path):
             # move the robot
             set_joint_positions(world.robot, world.arm_joints, point)
 
@@ -201,6 +205,8 @@ class KitchenRobot:
                     body = world.get_body(self.sugar_box)
                 
                 set_pose(body,robot_position)
+            if i == 0:
+                wait_for_user() 
             time.sleep(0.05)
 
         # Simulate "opening" drawer
@@ -279,6 +285,7 @@ def main():
             wait_for_user()
 
         # visualize the path
+        #wait_for_user()
         kr.simulate_path(act, path)
         wait_for_user()
 
@@ -292,7 +299,7 @@ if __name__ == '__main__':
     # parse input arguments
     if len(sys.argv) == 1:
         # Pick randomly between RRT and colision mode
-        if (random.random() > 0.5):
+        if (random.random() > 0.0):
             rrt = False
         else:
             rrt = True
