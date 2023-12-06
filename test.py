@@ -33,6 +33,7 @@ def pose2d_on_surface(world, entity_name, surface_name, pose2d=UNIT_POSE2D):
     body = world.get_body(entity_name)
     surface_aabb = compute_surface_aabb(world, surface_name)
     z = stable_z_on_aabb(body, surface_aabb)
+    print('z',z)
     pose = Pose(Point(x, y, z), Euler(yaw=yaw))
     set_pose(body, pose)
     return pose
@@ -53,11 +54,12 @@ def main():
 
     np.set_printoptions(precision=3, suppress=True)
     world = World(use_gui=True)
-    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(0.5, 0.65, np.pi / 4))
+    sugar_box = add_sugar_box(world, idx=0, counter=1, pose2d=(0.15, 0.65, np.pi / 4))
     
-    sugar_box_pose = get_pose(world.get_body(sugar_box))
+    sugar_box_pose, quat = get_pose(world.get_body(sugar_box))
+    print('q',quat)
     
-    set_pose(sugar_box,(Point(0.71, 1.10, -0.65), Euler(np.pi/2,0.,-np.pi/2)))
+    #set_pose(sugar_box,(Point(0.71, 1.10, -0.65), Euler(np.pi/2,0.,-np.pi/2)))
     print('sugar box pose',sugar_box_pose)
     spam_box = add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
     # wait_for_user()
@@ -69,7 +71,7 @@ def main():
     sample_fn = get_sample_fn(world.robot, world.arm_joints)
 
     print("Going to operate the base without collision checking")
-    goal_pos = translate_linearly(world, 0.9) # does not do any collision checking!!
+    goal_pos = translate_linearly(world, 1.2) # does not do any collision checking!!
     goal_pos[1] += 0.7
     set_joint_positions(world.robot, world.base_joints, goal_pos)
     
@@ -97,17 +99,26 @@ def main():
         #set_joint_positions(world.robot, world.arm_joints, conf)
         #startt = [-0.9993014606753718, 0.5575981344031993, 0.08848226914383991, -1.9027443759647094, -0.07403383822822018, 2.4572408795101772, -0.08136335471573197]
         #startt = [1.1179275530880908, -1.7247582114792013, -1.905165080776905, -1.7852457187137816, 0.7740623064191361, 2.8037386402624724, 2.896613453226052]
-        startt = [0.6108557398957775, -1.2408811105330781, -2.2342699407330207, -2.085964847766605, 0.8128326480682402, 2.2560068429844358, 2.8898273321656816]
+        #startt = [0.6108557398957775, -1.2408811105330781, -2.2342699407330207, -2.085964847766605, 0.8128326480682402, 2.2560068429844358, 2.8898273321656816]
+       # startt = [0.0682973250952767, 0.6499127368581343, -0.0006061389437870515, -1.0625107631386301, 0.0003704864736713276, 1.7124233996773883, 0.8531605328675052]
+        #startt = [-0.9993014606753718, 0.5575981344031993, 0.08848226914383991, -1.9027443759647094, -0.07403383822822018, 2.4572408795101772, -0.08136335471573197]
+        #startt= [-0.9993014606753718, 0.5575981344031993, 0.08848226914383991, -1.9027443759647094, -0.07403383822822018, 2.4572408795101772, -0.08136335471573197]
+        #start = [2.0263174857291624, -0.9767016766234768, -2.1946419786238747, -1.1652727156886957, -0.7616297353418, 1.796696137014173, 0.541558247303203]
+        #startt = [0.6108557398957775, -1.2408811105330781, -2.2342699407330207, -2.085964847766605, 0.8128326480682402, 2.2560068429844358, 2.8898273321656816]
+        startt = [0.19804023471086296, -1.4349267532033405, -1.2478317792941391, -2.2974082827545645, 0.11014769033115979, 2.5257883467675386, -2.1023655766474945]
         set_joint_positions(world.robot, world.arm_joints, startt)
         ik_joints = get_ik_joints(world.robot, PANDA_INFO, tool_link)
         start_pose = get_link_pose(world.robot, tool_link)
         print('start_pose', start_pose)
-        end_pose = Pose(Point(0.71, 1.10, -0.65), Euler(np.pi/2,0.,-np.pi/2))
+        #end_pose = Pose(Point(0.71, 1.20, -0.20), Euler(np.pi/2,0.,-np.pi/2))
+        #end_pose = Pose(Point(0.45000001788139343, 1.2000000476837158, -0.45), Euler(0., -np.pi, 0.))
+        #0.75, 1.1999999284744263, -0.6499999165534973
+        end_pose = Pose(Point(0.75, 1.1999999284744263, -0.20), Euler(0., -np.pi, 0.))
         #end_pose = Pose(Point(0.75, 2.0 -1.50), Euler(np.pi/2,0.,-np.pi/2))
         print('end_pose', end_pose)
-        for pose in interpolate_poses(start_pose, end_pose, pos_step_size=0.01):
+        for pose in interpolate_poses(start_pose, end_pose, pos_step_size=0.005):
             conf = next(closest_inverse_kinematics(world.robot, PANDA_INFO, tool_link, pose, max_time=0.05), None)
-            #print(conf)
+            print(conf)
             if conf is None:
                 print('Failure!')
                 # wait_for_user()

@@ -44,7 +44,9 @@ class KitchenRobot:
     def __init__(self):
         # Create pybullet world
         world = World(use_gui=True)
-        sugar_box = helpers.add_sugar_box(world, idx=0, counter=1, pose2d=(0.1, 0.65, np.pi / 4))
+        #sugar_box = helpers.add_sugar_box(world, idx=0, counter=1, pose2d=(0.1, 0.65, np.pi / 4))
+        sugar_box = helpers.add_sugar_box(world, idx=0, counter=1, pose2d=(0.13, 0.65, np.pi / 4))
+
         spam_box = helpers.add_spam_box(world, idx=1, counter=0, pose2d=(0.2, 1.1, np.pi / 4))
         enable_gravity()
         world._update_initial()
@@ -219,6 +221,8 @@ class KitchenRobot:
                 sign = c['sign'][i]
                 val = c['val'][i]
                 prog.AddConstraint(sign*x[i,:] < val)
+        
+       
 
 
     
@@ -231,6 +235,9 @@ class KitchenRobot:
         for point in path:
             # move the robot
             set_joint_positions(world.robot, world.arm_joints, point)
+            is_collision = pairwise_collision(world.robot,world.kitchen)
+            if is_collision:
+                print(f"COLLISION FOUND: {is_collision}")
 
             # simulate grabbing
             if (act.name == 'placein') or \
@@ -239,8 +246,41 @@ class KitchenRobot:
                 robot_position = get_link_pose(world.robot,self.tool_link)
                 if 'spam' in act.parameters:
                     body = world.get_body(self.spam_box)
+                    z_offset = 0.15  # 5 cm below the gripper
+                    
+                    # New robot position (adjusting Z-coordinate)
+                    new_position = (
+                        robot_position[0][0],  # X-coordinate, unchanged
+                        robot_position[0][1],  # Y-coordinate, unchanged
+                        robot_position[0][2] - z_offset  # Z-coordinate, offset downwards
+                    )
+                    
+                    # New orientation quaternion
+                    new_orientation = (0.0, 0.0, 0.38268343236508984, 0.9238795325112867)
+                    
+                    # New robot position and orientation
+                    robot_position = (new_position, new_orientation)
+
+
+                    #print(robot_position)
                 else:
                     body = world.get_body(self.sugar_box)
+                    
+                    z_offset = 0.2  # 5 cm below the gripper
+                    
+                    # New robot position (adjusting Z-coordinate)
+                    new_position = (
+                        robot_position[0][0],  # X-coordinate, unchanged
+                        robot_position[0][1],  # Y-coordinate, unchanged
+                        robot_position[0][2] - z_offset # Z-coordinate, offset downwards
+                    )
+                    
+                    # New orientation quaternion
+                    new_orientation = (0.0, 0.0, 0.38268343236508984, 0.9238795325112867)
+                    
+                    # New robot position and orientation
+                    robot_position = (new_position, new_orientation)
+                    #)
                 
                 set_pose(body,robot_position)
 
@@ -262,10 +302,42 @@ class KitchenRobot:
                 robot_position = get_link_pose(world.robot,tool_link)
 
                 set_joint_positions(world.robot, world.arm_joints, joint_angle)
+                is_collision = pairwise_collision(world.robot,world.kitchen)
+                if is_collision:
+                    print(f"COLLISION FOUND: {is_collision}")
                 set_joint_position(world.kitchen,56,drawer_pose)
                 time.sleep(0.05)
-
-
+            '''
+            for joint_angle in helpers.VERT_TRAJ:
+                set_joint_positions(world.robot, world.arm_joints, joint_angle)
+                is_collision = pairwise_collision(world.robot,world.kitchen)
+                if is_collision:
+                    print(f"COLLISION FOUND: {is_collision}")
+                time.sleep(0.05)
+            
+            for joint_angle in helpers.TWIST_TRAJ:
+                set_joint_positions(world.robot, world.arm_joints, joint_angle)
+                is_collision = pairwise_collision(world.robot,world.kitchen)
+                if is_collision:
+                    print(f"COLLISION FOUND: {is_collision}")
+                time.sleep(0.05)
+            '''
+    def vert_twist(self, path_vert):
+        
+        world = self.world
+    
+        if not USE_JOINT_SPACE:
+            raise NotImplementedError
+            
+        for point in path_vert:
+            # move the robot
+            set_joint_positions(world.robot, world.arm_joints, point)
+            is_collision = pairwise_collision(world.robot,world.kitchen)
+            if is_collision:
+                print(f"COLLISION FOUND: {is_collision}")
+    
+            time.sleep(0.05)
+    
 
 
 
@@ -287,8 +359,10 @@ def main():
     # Follow the plan
     if rrt:
         print("Showing RRT-planned trajectory")
+        check = 0
     else:
-        print("Showing optimization-based trajectory (no collision avoidance)")
+        print("Showing optimization-based trajectory")
+        check = 1
     wait_for_user("Press enter to begin")
 
     for i, act in enumerate(kr.plan):
@@ -313,6 +387,13 @@ def main():
         else:
             # optimization
             path = kr.optimize_trajectory(start,goal, OPTIMIZE_NUM_PTS)
+            
+            if act.name == 'open':
+                start_vert = [0.6108557398957775, -1.2408811105330781, -2.2342699407330207, -2.085964847766605, 0.8128326480682402, 2.2560068429844358, 2.8898273321656816]
+                goal_vert = [0.19804023471086296, -1.4349267532033405, -1.2478317792941391, -2.2974082827545645, 0.11014769033115979, 2.5257883467675386, -2.1023655766474945]
+                path_vert = kr.optimize_trajectory(start_vert,goal_vert, OPTIMIZE_NUM_PTS)
+            
+            
 
 
         if path is not None:
@@ -324,6 +405,9 @@ def main():
         # visualize the path
         time.sleep(1.0)
         kr.simulate_path(act, path)
+        if check ==1:
+            if act.name == 'open':
+                kr.vert_twist(path_vert)
         wait_for_user()
 
     # pause at very end
