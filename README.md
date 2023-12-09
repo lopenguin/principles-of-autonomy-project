@@ -1,25 +1,5 @@
 # 16.413 Project
 
-## Installation
-Follow the instructions below to run the code in this repository.
-
-We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
-
-1. Install non-Python dependencies:
-  ```sh
-  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-  sudo apt-get install git-lfs clang cmake python3-pip python3-venv  && git lfs install --skip-repo
-  ```
-2. Install Python packages: `pip install -r requirements.txt`
-
-3. Build pybullet and pddl-parser:
-  ```sh
-  cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
-  python setup.py install
-  cd - && cd pddl-parser && \
-  python setup.py install
-  ```
-
 ## Organization
 
 This repository is organized into as follows:
@@ -180,4 +160,118 @@ hill climbing plan:
 Note that the BFS and hill climbing plans are the same, since the predicate space is so simple.
 
 ## Motion Planning
+
+### Running for Yourself and High Level Description
+To run the motion planner, execute the following command:
+
+```
+python3 final_project.py rrt
+```
+
+The motion planner first integrates the PDDL from activity planning by generating a plan based off the goal and end states provided. It will then sequentially execute each action by generating a rapidly exploring random trees (RRT) trajectory in joint space. Upon starting, the kitchen environment and robot arm will be created. The robot arm will be set near the kithcen counter to complete the tasks and the sugar and spam boxes will be generated. The user will then be prompted to start the simulation. Once started, the activity planner will determine the correct steps to achieve the goal, and the first step will be sent to the RRT motion planner. You will see some strange, jumpy behavior from the arm. This is the collision checker ensuring that the final RRT path does not collide with the environment. Once the path is found, the robot arm will move to the next location. The user will then be prompted to continue the simulation, and the next step in the activity plan will be activated by the motion planner. This continues until the goal is reached. Once the goal is reached, the simulation environment closes, ending the simulation.
+
+### Organization
+
+The motion planning process involves the following scripts:
+
+- `final_project.py`: The main script integrating different modules. This script contains both motion planning with RRT and trajectory optimization (to be explained in the next section)
+- `helpers.py`: Provides support functions and configurations as well as RRT functions and a hard-coded drawer opening trajectory.
+
+### Set-Up
+
+The world is initialized with the `KitchenRobot` class. It creates the world with the graphical user interface (GUI), creates and places `sugar_box` and `spam_box`, and linearly translates the robot arm near the counter (but not colliding with). Additionally, it can generate the robot arm lower and upper joint angle limits. It's sub functions are described as follows:
+
+- `generate_plan(self)` generates a PDDL plan using hill climb search described in the previous section
+- `rrt_on_action(self, start, goal, goal_region)` generates an RRT trajectory of robot arm angles that avoids collisions between start and end, moves to a desired goal region, and remains within joint angles limits.
+
+The overall simulation is handled by `main()`, which first establishes the robot and kitchen. It then generates an acitivty plan and determines whether RRT or trajectory optimization will be used based on user input. If there is no user input then executing `python3 final_project.py will choose either RRT or trajectory optimization randomly.
+
+### PDDL Integration
+
+Once the activity plan is generated, each step is sent to a loop in `main()` that executes that specific motion plan. 
+
+The motion planner integrates with the PDDL by obtaining the start and goal positions of the current step in the activity plan. The starting position is obtained by querying the current world state using `start = get_joint_positions(kr.world.robot, kr.world.arm_joints)` and the goal is determined based on the activity plan. Each object from the activity plan has defined joint angles experimentally determined using `test.py`. The object to joint angle mapping is described in `kitchen_map.py` and the goal is generated via `goal = get_goal(act, KMAP_JOINT)`. Note that `kitchen_map.py` has objects in both joint and task space. 
+
+Once both the start and goal joint angles are known, they can be passed to RRT to find a path between them.
+
+### RRT Solver
+If RRT was chosen, then the path between start and end points will be generated through `rrt_on_action(start, goal, goal_region)`. The goal_region is a tuneable parameter for RRT. 
+
+`rrt_on_action` begins by either choosing a random set of joint angles using with the robot and kitchen environment with `helpers.get_sample_fn(world.robot, world.arm_joints)` or chooses a random point within the goal region based off of a tuneable goal bias value called `RRT_GOAL_BIAS`.
+
+#### Tuneable Parameters - 1) Goal-Region Tolerance, 2) RRT Max Iterations, 3) RRT Goal Biasing, 4) Max Step for x_new, 5) Max Step for Collision Checking
+1) Goal-Region Tolerance: 
+
+The goal region is determined by expanding the set of goal joint angles within a certain angle tolerance as shown:
+
+```
+goal_region = [(angle - tolerance_radians, angle + tolerance_radians) for angle in goal]
+```
+
+`tolerance_radians` is tuneable to determine the angular size of the upper and lower bounds of the goal region. It is currently set at 1 degree, but can be manually changed in `main()` on this line:
+
+```
+tolerance_radians = 1*(np.pi/180) # tolerance for goal_pose to make a feasible goal region
+```
+2) RRT Max Iterations:
+
+Determines the maximum number of iterations RRT will go through to find a path to the goal region. This is set at the beginning of `final_project.py` by the `RRT_MAX_ITER` variable. It is currently set to 10,000.
+
+3) RRT Goal Biasing:
+
+Determines the probability that `x_rand` will be chosen within the goal region and is set at the beginning of `final_project.py` with `RRT_GOAL_BIAS`. It is currently set to 0.2, meaning that there is a 20% probability that `x_rand` will be chosen from within the goal region.
+
+4) Max step for `x_new`
+
+Determines the maximum angular step for `x_new` which is truncated from `x_rand` and is set at the beginning of `final_project.py` with `RRT_MAX_STEP`. It is currently set to 5 degrees, meaning that `x_new` must be within 5 degrees from `x_nearest`.
+
+5) Max Step for Collision Checking
+
+Determines how many points between `x_nearest` and `x_new` are checked for collisions and is set at the beginning of `final_project.py` with `RRT_COLLIDES_STEP`. It is currently set to 0.01 radians (~0.5 degrees), meaning that the collision checker will check for collisions  at 0.5 degree increments at and between `x_nearest` and `x_new`.
+
+
+
+
+
+
+## Trajectory optimization
 TODO
+
+## Installation
+Note that running this code will require a Linux operating system. The author's of this README used either an Ubuntu OS or Ubuntu VM with a Windows OS through VMware Workstation.
+
+Follow the instructions below to run the code in this repository.
+
+We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
+
+1. Install non-Python dependencies:
+  ```sh
+  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  sudo apt-get install git-lfs clang cmake python3-pip python3-venv  && git lfs install --skip-repo
+  ```
+2. Install Python packages: `pip install -r requirements.txt`
+
+3. Build pybullet and pddl-parser:
+  ```sh
+  cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
+  python setup.py install
+  cd - && cd pddl-parser && \
+  python setup.py install
+  ```
+4. Install Drake for trajectory optimization
+```
+pip install --upgrade pip
+pip install drake pydrake
+```
+
+
+
+
+
+
+
+
+
+
+
+
