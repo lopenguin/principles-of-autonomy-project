@@ -250,7 +250,7 @@ tolerance_radians = 1*(np.pi/180) # tolerance for goal_pose to make a feasible g
 
 Determines the maximum number of iterations RRT will go through to find a path to the goal region. This is set at the beginning of `final_project.py` by the `RRT_MAX_ITER` variable. It is currently set to 10,000.
 
-### 3) RRT Max Step:
+#### 3) RRT Max Step:
 Determines the maximum angular distance between `x_nearest` and `x_new`. This is set at the beginning of `final_project.py` by the `RRT_MAX_STEP` variable. It is currently set to 5 degrees.
 
 #### 4) RRT Goal Biasing:
