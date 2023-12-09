@@ -201,9 +201,37 @@ Once both the start and goal joint angles are known, they can be passed to RRT t
 ### RRT Solver
 If RRT was chosen, then the path between start and end points will be generated through `rrt_on_action(start, goal, goal_region)`. The goal_region is a tuneable parameter for RRT. 
 
-`rrt_on_action` begins by either choosing a random set of joint angles using with the robot and kitchen environment with `helpers.get_sample_fn(world.robot, world.arm_joints)` or chooses a random point within the goal region based off of a tuneable goal bias value called `RRT_GOAL_BIAS`.
+#### x_rand
+`rrt_on_action` begins by either choosing a random set of joint angles, called `x_rand` that is within joint angle limits within the robot and kitchen environment with `helpers.get_sample_fn(world.robot, world.arm_joints)` or chooses a the goal set of joint angles based off of a tuneable goal bias value called `RRT_GOAL_BIAS`.
+
+#### x_nearest
+Next, `x_nearest` is calculated in `find_x_nearest(Vertices,x_rand)` by choosing the node that is closest in joint angle space to `x_rand`. To determine the closest set of joint angles the J2 norm (Euclidean Distance) was used between each set of joint angles as shown in the following:
+
+The Euclidean distance between two 7-dimensional vectors (e.g., joint angle configurations of a robotic arm) is computed as:
+
+`||v - w||_2 = sqrt((v1 - w1)^2 + (v2 - w2)^2 + ... + (v7 - w7)^2)`
+
+Here, `v = (v1, v2, ..., v7)` and `w = (w1, w2, ..., w7)` represent two different joint angle configurations.
+
+#### x_new
+Now `x_new` can be calculated with `x_new = tuple(helpers.find_x_new(x_nearest,x_rand, RRT_MAX_STEP, self.lower_limits, self.upper_limits))`. This will calculate an `x_new` that is within the degree limits of RRT_MAX_STEP and within joint angle limits.
+
+#### Collision Checking
+Once `x_new` is created, we must confirm there is no collision at this point or any points between `x_nearest` and `x_new`. The function `collides(self, x0, x1)` takes in two joint angle vectors and performs collision checking at both points and at in-between points of fidelity based on the tuneable RRT_COLLIDES_STEP. `numpy` functions are used to created the angles to be checked using `np.linspace`.
+
+Once each angle to be collision checked is created, we use a `pybullet_tools.utils` function called `pairwise_collision`. First, the joint angle is set in the kitchen environment, then a the collision function is run against `world.robot` and `world.kitchen`, which will result in a binary true or false statement of whether there was a collision. If there is a collision between `x_nearest` and `x_new`, then `x_new` is discarded, and the loop starts over with choosing a new `x_rand`.
+
+Note that this collision checking method causes the robot to move in the GUI in a very rapid and strange fashion. However, we ignore this, understanding that this is just a part of the RRT determining collisions and is not the actual final RRT trajectory.
+
+#### Finding the Final RRT Trajectory
+If `x_new` passes collision checking, then the path between it and `x_nearest` is obstacle free and within joint angle limits. It is then added as a node in the RRT tree.
+
+We then check if `x_new` is within the goal region with `helpers.is_node_within_goal_region(x_new, goal_region)`. This determines if `x_new` is within `goal_region`. If it is, then RRT is complete and the final path is determined through `helpers.find_rrt_path(start, x_new, edges)` which starts from `x_new` and appends their parent value (listed as a key in a python dictionary). This is repeated until the starting joint angles are added to the path.
+
 
 ### Tuneable Parameters
+
+#### Goal-Region Tolerance
 
 The goal region is determined by expanding the set of goal joint angles within a certain angle tolerance as shown:
 
@@ -222,23 +250,34 @@ Determines the maximum number of iterations RRT will go through to find a path t
 
 #### 3) RRT Goal Biasing:
 
-Determines the probability that `x_rand` will be chosen within the goal region and is set at the beginning of `final_project.py` with `RRT_GOAL_BIAS`. It is currently set to 0.2, meaning that there is a 20% probability that `x_rand` will be chosen from within the goal region.
-
-#### 4) Max step for `x_new`
-
+Determines the probability that `x_rand` will be equal to the goal state and is set at the beginning of `final_project.py` with `RRT_GOAL_BIAS`. It is currently set to 0.2, meaning that there is a 20% probability that `x_rand` will be equal to the goal joint angles.
 Determines the maximum angular step for `x_new` which is truncated from `x_rand` and is set at the beginning of `final_project.py` with `RRT_MAX_STEP`. It is currently set to 5 degrees, meaning that `x_new` must be within 5 degrees from `x_nearest`.
 
 #### 5) Max Step for Collision Checking
 
 Determines how many points between `x_nearest` and `x_new` are checked for collisions and is set at the beginning of `final_project.py` with `RRT_COLLIDES_STEP`. It is currently set to 0.01 radians (~0.5 degrees), meaning that the collision checker will check for collisions  at 0.5 degree increments at and between `x_nearest` and `x_new`.
 
+### Example Case
+We continue using the same example plan from the activity planning section with the following steps:
+```
+1. open ('drawer',)
+2. pickup ('spam', 'countertop')
+3. placein ('spam', 'drawer')
+4. pickup ('sugar', 'stove')
+5. placeon ('sugar', 'countertop')
+```
 
+This plan is mapped to a set of start and goal joint angles and then a trajectory for each action is found with the RRT method described above. Please view the following video for the results. Note that the collision checking motion was removed and only the RRT trajectories are shown.
+
+PLACE RRT VIDEO HERE 
 
 
 
 
 ## Trajectory optimization
 TODO
+
+## Simulating the Path
 
 ## Installation
 Note that running this code will require a Linux operating system. The author's of this README used either an Ubuntu OS or Ubuntu VM with a Windows OS through VMware Workstation.
