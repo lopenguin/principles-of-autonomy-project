@@ -404,6 +404,7 @@ def main():
 
         # visualize the path
         time.sleep(1.0)
+        wait_for_user()
         kr.simulate_path(act, path)
         if check ==1:
             if act.name == 'open':
