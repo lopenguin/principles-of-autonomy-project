@@ -218,7 +218,9 @@ The world is initialized with the `KitchenRobot` class. It creates the world wit
 
 The overall simulation is handled by `main()`, which first establishes the robot and kitchen. It then generates an acitivty plan and determines whether RRT or trajectory optimization will be used based on user input. If there is no user input then executing `python3 final_project.py will choose either RRT or trajectory optimization randomly. The robot and kitchen world is shown in the following screenshot of the simulation.
 
-![Kithcen World with Robot Arm](https://github.com/lopenguin/principles-of-autonomy-project/blob/main/KitchenWorld.png?raw=true)
+![Kitchen World with Robot Arm](https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/KitchenWorld.png?raw=true)
+
+
 
 
 ### PDDL Integration
