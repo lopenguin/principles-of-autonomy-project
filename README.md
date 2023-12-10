@@ -177,12 +177,12 @@ python3 final_project.py rrt
 The motion planner first integrates the PDDL from activity planning by generating a plan based off the goal and end states provided. It will then sequentially execute each action by generating a rapidly exploring random trees (RRT) trajectory in joint space. Upon starting, the kitchen environment and robot arm will be created. The robot arm will be set near the kithcen counter to complete the tasks and the sugar and spam boxes will be generated. The user will then be prompted to start the simulation. Once started, the activity planner will determine the correct steps to achieve the goal, and the first step will be sent to the RRT motion planner. You will see some strange, jumpy behavior from the arm. This is the collision checker ensuring that the final RRT path does not collide with the environment. Once the path is found, the robot arm will move to the next location. The user will then be prompted to continue the simulation, and the next step in the activity plan will be activated by the motion planner. This continues until the goal is reached. Once the goal is reached, the simulation environment closes, ending the simulation. The terminal commands for both RRT and trajectory optimization are seen below:
 
 <figure>
-  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/terminal_view.png?raw=true" alt="Terminal Prompt for RRT">
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/terminal_view.png?raw=true" alt="Terminal Prompt for RRT">
   <figcaption>Fig.1 - Terminal Prompt for RRT.</figcaption>
 </figure>
 
 <figure>
-  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/terminal_traj_opt.png?raw=true" alt="Terminal Prompt for Trajectory Optimization">
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/terminal_traj_opt.png?raw=true" alt="Terminal Prompt for Trajectory Optimization">
   <figcaption>Fig.2 - Terminal Prompt for Trajectory Optimization.</figcaption>
 </figure>
 
@@ -203,12 +203,12 @@ The world is initialized with the `KitchenRobot` class. It creates the world wit
 The overall simulation is handled by `main()`, which first establishes the robot and kitchen. It then generates an acitivty plan and determines whether RRT or trajectory optimization will be used based on user input. If there is no user input then executing `python3 final_project.py will choose either RRT or trajectory optimization randomly. The robot and kitchen world in the initial and finals states are shown in the following screenshots of the simulation.
 
 <figure>
-  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/KitchenWorld.png?raw=true" alt="Initial State">
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/KitchenWorld.png?raw=true" alt="Initial State">
   <figcaption>Fig.3 - Initial State: Kitchen World with Robot Arm.</figcaption>
 </figure>
 
 <figure>
-  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/Final_State.png?raw=true" alt="Final (Goal) State">
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/Final_State.png?raw=true" alt="Final (Goal) State">
   <figcaption>Fig.4 - Final (Goal) State: Kitchen World with Robot Arm.</figcaption>
 </figure>
 
@@ -320,7 +320,11 @@ The specific code for trajectory optimization is in `KitchenRobot.optimize_traje
 ### Example Case
 Our example case proceeds similarly to the RRT example, although the motion is considerably smoother. Note that after opening the drawer an additional vertical trajectory occurs that is not found in the RRT. This is another optimal trajectory to ensure the entire trajectory over all activities is collision free. Like RRT, the only hard-coded trajectory is the drawer opening sequence. See the video:
 
-PLACE OPTIMIZE VIDEO HERE
+
+
+https://github.com/lopenguin/principles-of-autonomy-project/assets/46176315/9512b4ce-a83a-4e39-90a6-881f1d442250
+
+
 
 ## Simulating the Path
 Once the path is created either from RRT or trajectory optimization, it is passed to `simulate_path(self, act, path)`, which also takes into account the current action `act`. For each point in the path, the robot arm is moved via `set_joint_positions(world.robot, world.arm_joints, point)` and a collision checker follows. If there is a collision during this stage, then the terminal will say "Collision Found" at each point it collides in the path. However, since RRT already considers collisons and trajectory optimization also accounts for this, the path should have no collisions for either for the given scenario.
@@ -330,12 +334,12 @@ Next, if the action is `placein` or `placeon`, the robot's pose as (X,Y,Z,quater
 If the action is `open`, the generated trajectory will move the robot arm right in front of the handle of the closed drawer. Then, the hard-coded opening trajectory ensues. The drawer is open by finding its specific number in the kitchen environment and updating its drawer position in step with the robot arm. A drawer opening trajectory of equal length to the hard-coded trajectory was created via `np.linspace` so that it smoothly opens the drawer consistent with robot motion. Additionally, if trajectory optimization is run, then the robot arm will perform one extra movmement calculated using Drake. This moves the arm directly above the drawer so that follow-on actions result in no collision. This ensures the entire sequence provided by trajectory optimization is collision free.
 
 <figure>
-  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/Drawer_Open.png?raw=true" alt="Final Drawer Open State with RRT">
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/Drawer_Open.png?raw=true" alt="Final Drawer Open State with RRT">
   <figcaption>Fig.5 - Final Drawer Open State with RRT.</figcaption>
 </figure>
 
 <figure>
-  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/traj_opt_drawer.png?raw=true" alt="Final Drawer Open State with Trajectory Optimization">
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/traj_opt_drawer.png?raw=true" alt="Final Drawer Open State with Trajectory Optimization">
   <figcaption>Fig.6 - Final Drawer Open State with Trajectory Optimization.</figcaption>
 </figure>
 
