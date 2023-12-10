@@ -1,33 +1,7 @@
 # 16.413 Project
 
-## Installation
-Note that running this code will require a Linux operating system. The author's of this README used either an Ubuntu OS or Ubuntu VM with a Windows OS through VMware Workstation.
-
-Follow the instructions below to run the code in this repository.
-
-We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
-
-1. Install non-Python dependencies:
-  ```sh
-  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-  sudo apt-get install git-lfs clang cmake python3-pip python3-venv  && git lfs install --skip-repo
-  ```
-2. Install Python packages: `pip install -r requirements.txt`
-
-3. Build pybullet and pddl-parser:
-  ```sh
-  cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
-  python setup.py install
-  cd - && cd pddl-parser && \
-  python setup.py install
-  ```
-4. Install Drake for trajectory optimization
-```
-pip install --upgrade pip
-pip install drake pydrake
-```
-
 ## Organization
+*Note that installation instructions are at the bottom of this README.
 
 This repository is organized into as follows:
 
@@ -200,7 +174,17 @@ python3 final_project.py rrt
 ```
 
 ### High Level Description
-The motion planner first integrates the PDDL from activity planning by generating a plan based off the goal and end states provided. It will then sequentially execute each action by generating a rapidly exploring random trees (RRT) trajectory in joint space. Upon starting, the kitchen environment and robot arm will be created. The robot arm will be set near the kithcen counter to complete the tasks and the sugar and spam boxes will be generated. The user will then be prompted to start the simulation. Once started, the activity planner will determine the correct steps to achieve the goal, and the first step will be sent to the RRT motion planner. You will see some strange, jumpy behavior from the arm. This is the collision checker ensuring that the final RRT path does not collide with the environment. Once the path is found, the robot arm will move to the next location. The user will then be prompted to continue the simulation, and the next step in the activity plan will be activated by the motion planner. This continues until the goal is reached. Once the goal is reached, the simulation environment closes, ending the simulation.
+The motion planner first integrates the PDDL from activity planning by generating a plan based off the goal and end states provided. It will then sequentially execute each action by generating a rapidly exploring random trees (RRT) trajectory in joint space. Upon starting, the kitchen environment and robot arm will be created. The robot arm will be set near the kithcen counter to complete the tasks and the sugar and spam boxes will be generated. The user will then be prompted to start the simulation. Once started, the activity planner will determine the correct steps to achieve the goal, and the first step will be sent to the RRT motion planner. You will see some strange, jumpy behavior from the arm. This is the collision checker ensuring that the final RRT path does not collide with the environment. Once the path is found, the robot arm will move to the next location. The user will then be prompted to continue the simulation, and the next step in the activity plan will be activated by the motion planner. This continues until the goal is reached. Once the goal is reached, the simulation environment closes, ending the simulation. The terminal commands for both RRT and trajectory optimization are seen below:
+
+<figure>
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/terminal_view.png?raw=true" alt="Terminal Prompt for RRT">
+  <figcaption>Fig.1 - Terminal Prompt for RRT.</figcaption>
+</figure>
+
+<figure>
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/terminal_traj_opt.png?raw=true" alt="Terminal Prompt for Trajectory Optimization">
+  <figcaption>Fig.2 - Terminal Prompt for Trajectory Optimization.</figcaption>
+</figure>
 
 ### Organization
 
@@ -216,12 +200,17 @@ The world is initialized with the `KitchenRobot` class. It creates the world wit
 - `generate_plan(self)` generates a PDDL plan using hill climb search described in the previous section
 - `rrt_on_action(self, start, goal, goal_region)` generates an RRT trajectory of robot arm angles that avoids collisions between start and end, moves to a desired goal region, and remains within joint angles limits.
 
-The overall simulation is handled by `main()`, which first establishes the robot and kitchen. It then generates an acitivty plan and determines whether RRT or trajectory optimization will be used based on user input. If there is no user input then executing `python3 final_project.py will choose either RRT or trajectory optimization randomly. The robot and kitchen world is shown in the following screenshot of the simulation.
+The overall simulation is handled by `main()`, which first establishes the robot and kitchen. It then generates an acitivty plan and determines whether RRT or trajectory optimization will be used based on user input. If there is no user input then executing `python3 final_project.py will choose either RRT or trajectory optimization randomly. The robot and kitchen world in the initial and finals states are shown in the following screenshots of the simulation.
 
-![Kitchen World with Robot Arm](https://github.com/lopenguin/principles-of-autonomy-project/blob/main/screenshots/KitchenWorld.png?raw=true)
+<figure>
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/KitchenWorld.png?raw=true" alt="Initial State">
+  <figcaption>Fig.3 - Initial State: Kitchen World with Robot Arm.</figcaption>
+</figure>
 
-
-
+<figure>
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/Final_State.png?raw=true" alt="Final (Goal) State">
+  <figcaption>Fig.4 - Final (Goal) State: Kitchen World with Robot Arm.</figcaption>
+</figure>
 
 ### PDDL Integration
 
@@ -320,18 +309,56 @@ python3 final_project.py optimizes
 ### Details
 Trajectory optimization follows the same organization, setup, and PDDL integration as RRT trajectory generation.
 
-The specific code for trajectory optimization is in `KitchenRobot.optimize_trajectory` within `final_project.py`. The code uses pydrake to set up an optimization problem to find the shortest path over joint angles. The only tunable parameter is the number of points to consider on this trajectory; the default is set at 50 which is more than enough to find feasible trajectories within the kitchen environment.
+The specific code for trajectory optimization is in `KitchenRobot.optimize_trajectory(self, start, goal, num_pts)` within `final_project.py`. The code uses pydrake to set up an optimization problem (in `MathematicalProgram`) to find the shortest path over joint angles between the start and end states. The only tunable parameter is the number of points to consider on this trajectory; the default is set at 50 which is more than enough to find feasible trajectories within the kitchen environment. The minimizing function was created using `AddCost`. Start and end states were constrained using `AddLinearEqualityConstraint` and joint angle limits were constrained with `AddBoundingBoxConstraint`. Note that there are no collision avoidance constraints. Despite this, the entire trajectory is designed so that collisions will not occur, such as moving the arm out of the way after opening the drawer. For details on the constrained optimization set-up, please see `16_413 Grad Project Final Write-Up.pdf` in the project files.
 
 ### Example Case
-Our example case proceeds similarly to the RRT example, although the motion is considerably smoother. See the video:
+Our example case proceeds similarly to the RRT example, although the motion is considerably smoother. Note that after opening the drawer an additional vertical trajectory occurs that is not found in the RRT. This is another optimal trajectory to ensure the entire trajectory over all activities is collision free. Like RRT, the only hard-coded trajectory is the drawer opening sequence. See the video:
 
 PLACE OPTIMIZE VIDEO HERE
 
 ## Simulating the Path
+Once the path is created either from RRT or trajectory optimization, it is passed to `simulate_path(self, act, path)`, which also takes into account the current action `act`. For each point in the path, the robot arm is moved via `set_joint_positions(world.robot, world.arm_joints, point)` and a collision checker follows. If there is a collision during this stage, then the terminal will say "Collision Found" at each point it collides in the path. However, since RRT already considers collisons and trajectory optimization also accounts for this, the path should have no collisions for either for the given scenario.
 
+Next, if the action is `placein` or `placeon`, the robot's pose as (X,Y,Z,quaternion) will be calculated via `robot_position = get_link_pose(world.robot,self.tool_link)`. Then, the pose of the object to be grabbed (`spam` or `sugar_box`) will be matched to the robot arm gripper. Note that we only change the X,Y,Z position and not the quaternion to retain the object's original attitude. Additionally, both objects have slight offsets in the -Z direction to make it look more realistic when "gripping". 
 
+If the action is `open`, the generated trajectory will move the robot arm right in front of the handle of the closed drawer. Then, the hard-coded opening trajectory ensues. The drawer is open by finding its specific number in the kitchen environment and updating its drawer position in step with the robot arm. A drawer opening trajectory of equal length to the hard-coded trajectory was created via `np.linspace` so that it smoothly opens the drawer consistent with robot motion. Additionally, if trajectory optimization is run, then the robot arm will perform one extra movmement calculated using Drake. This moves the arm directly above the drawer so that follow-on actions result in no collision. This ensures the entire sequence provided by trajectory optimization is collision free.
 
+<figure>
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/Drawer_Open.png?raw=true" alt="Final Drawer Open State with RRT">
+  <figcaption>Fig.5 - Final Drawer Open State with RRT.</figcaption>
+</figure>
 
+<figure>
+  <img src="https://github.com/lopenguin/principles-of-autonomy-project/blob/main/Screenshots/traj_opt_drawer.png?raw=true" alt="Final Drawer Open State with Trajectory Optimization">
+  <figcaption>Fig.6 - Final Drawer Open State with Trajectory Optimization.</figcaption>
+</figure>
+
+## Installation
+Note that running this code will require a Linux operating system. The author's of this README used either an Ubuntu OS or Ubuntu VM with a Windows OS through VMware Workstation.
+
+Follow the instructions below to run the code in this repository.
+
+We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
+
+1. Install non-Python dependencies:
+  ```sh
+  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  sudo apt-get install git-lfs clang cmake python3-pip python3-venv  && git lfs install --skip-repo
+  ```
+2. Install Python packages: `pip install -r requirements.txt`
+
+3. Build pybullet and pddl-parser:
+  ```sh
+  cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
+  python setup.py install
+  cd - && cd pddl-parser && \
+  python setup.py install
+  ```
+4. Install Drake for trajectory optimization
+```
+pip install --upgrade pip
+pip install drake pydrake
+```
 
 
 
