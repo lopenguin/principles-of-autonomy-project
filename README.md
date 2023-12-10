@@ -1,5 +1,32 @@
 # 16.413 Project
 
+## Installation
+Note that running this code will require a Linux operating system. The author's of this README used either an Ubuntu OS or Ubuntu VM with a Windows OS through VMware Workstation.
+
+Follow the instructions below to run the code in this repository.
+
+We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
+
+1. Install non-Python dependencies:
+  ```sh
+  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  sudo apt-get install git-lfs clang cmake python3-pip python3-venv  && git lfs install --skip-repo
+  ```
+2. Install Python packages: `pip install -r requirements.txt`
+
+3. Build pybullet and pddl-parser:
+  ```sh
+  cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
+  python setup.py install
+  cd - && cd pddl-parser && \
+  python setup.py install
+  ```
+4. Install Drake for trajectory optimization
+```
+pip install --upgrade pip
+pip install drake pydrake
+```
+
 ## Organization
 
 This repository is organized into as follows:
@@ -15,6 +42,8 @@ We have written the following scripts:
 - `pddl/activity_planning.py` runs an activity planner over a sample problem.
 - `final_project.py` opens the simulation, runs the activity planner, RRT and Trajectory optimization
 - `helpers.py` contains useful functions using `py.bullet` and the underlying functions for RRT in joint space
+- `robot_rrt.py` contains a RRT-focused version we used for testing. Do not evaluate based on this.
+- `test_environment.py` and `test.py` also contain simplified versions for testing.
 
 ## Activity Planning
 
@@ -280,37 +309,23 @@ PLACE RRT VIDEO HERE
 
 
 ## Trajectory optimization
-TODO
+### Running for Yourself
+To run the motion planner with trajectory optimization, execute the following command:
+
+```
+python3 final_project.py optimizes
+```
+### Details
+Trajectory optimization follows the same organization, setup, and PDDL integration as RRT trajectory generation.
+
+The specific code for trajectory optimization is in `KitchenRobot.optimize_trajectory` within `final_project.py`. The code uses pydrake to set up an optimization problem to find the shortest path over joint angles. The only tunable parameter is the number of points to consider on this trajectory; the default is set at 50 which is more than enough to find feasible trajectories within the kitchen environment.
+
+### Example Case
+Our example case proceeds similarly to the RRT example, although the motion is considerably smoother. See the video:
+
+PLACE OPTIMIZE VIDEO HERE
 
 ## Simulating the Path
-
-
-## Installation
-Note that running this code will require a Linux operating system. The author's of this README used either an Ubuntu OS or Ubuntu VM with a Windows OS through VMware Workstation.
-
-Follow the instructions below to run the code in this repository.
-
-We'll assume `python` is Python 3.8. We also assume you have cloned the repo.
-
-1. Install non-Python dependencies:
-  ```sh
-  curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-  sudo apt-get install git-lfs clang cmake python3-pip python3-venv  && git lfs install --skip-repo
-  ```
-2. Install Python packages: `pip install -r requirements.txt`
-
-3. Build pybullet and pddl-parser:
-  ```sh
-  cd ss-pybullet/pybullet_tools/ikfast/franka_panda/ && \
-  python setup.py install
-  cd - && cd pddl-parser && \
-  python setup.py install
-  ```
-4. Install Drake for trajectory optimization
-```
-pip install --upgrade pip
-pip install drake pydrake
-```
 
 
 
