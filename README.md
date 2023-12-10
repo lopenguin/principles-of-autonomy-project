@@ -296,8 +296,10 @@ This plan is mapped to a set of start and goal joint angles and then a trajector
 
 
 
-[![RRT Video](https://img.youtube.com/vi/uKLFTCdkiPI/0.jpg)](https://www.youtube.com/watch?v=uKLFTCdkiPI)
- 
+
+https://github.com/lopenguin/principles-of-autonomy-project/assets/46176315/74989039-824e-4ab7-a1f1-56e4ab479367
+
+
 
 
 
